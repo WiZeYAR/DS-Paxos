@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 # ---- IMPORTS ---- #
-from paxos import Role
-from paxos import Network, NetworkGroup
+from paxos import Role, Network, NetworkGroup, Client, Proposer, Acceptor, Learner, Node
 import sys
 import os
 
@@ -77,4 +76,7 @@ Current network state:
         Port: {network[Role.LEARNER][1]}
 ''')
 
-# ---- SETTING UP ---- #
+# ---- SETTING UP INSTANCE ---- #
+paxos_node: Node
+if self_role == 'client':
+    paxos_node = Client()

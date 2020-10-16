@@ -1,5 +1,12 @@
-from paxos.node import Node
+from typing import NoReturn
+from .role import Role
+from .network import Network
+from .node import NodeID, Node
 
 
 class Client(Node):
-    pass
+    def __init__(self, id: NodeID, network: Network) -> None:
+        super().__init__(id, Role.CLIENT, network)
+
+    def run(self) -> NoReturn:
+        pass
