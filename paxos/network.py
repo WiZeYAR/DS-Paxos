@@ -1,6 +1,5 @@
-from node.learner import Learner
 from typing import Tuple, NewType
-from role import Role
+from paxos.role import Role
 from copy import deepcopy
 
 
