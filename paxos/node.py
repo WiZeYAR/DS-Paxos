@@ -24,6 +24,10 @@ class Node(Abstract):
         self.__role = role
         self.__net = network
 
+        group_sock_address = self.__net[self.__role]
+        self.__receiver_socket = Network.multicast_receiver_socket(group_sock_address)
+        self.__sender_socket = Network.udp_sender_socket()
+
     # ---- Public properties ---- #
 
     @property
@@ -39,19 +43,26 @@ class Node(Abstract):
         return self.__net
 
     # ---- Public methods ---- #
-
     def listen(self) -> 'Message':
         """
         Starts listening on the network.
         When message is received -- returns it.
         This process blocks the paxos.
         """
+        message_raw = self.__receiver_socket.recv(Network.SOCKET_BUFFSIZE)
+        message = Message()
         raise NotImplementedError
+        return message
+
 
     def send(self, group: Role, message: 'Message') -> None:
         """
         Sends message to the group.
         """
+
+        receiver_address = self.__net[message.receiver_role]
+        message_raw = "serialized message"
+        self.__sender_socket.sendto(message_raw, receiver_address)
         raise NotImplementedError
 
     # ---- Public abstract methods ---- #
