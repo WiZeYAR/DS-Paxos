@@ -50,7 +50,7 @@ with open(config_path) as file:
     for line in file:
         if line == '':
             continue
-        group, addr, port, *_ = line.split(' ')
+        group, addr, port, *_ = line.split()
         groups[group] = NetworkGroup((addr, int(port)))
     network = Network(network_size,
                       groups['clients'],
