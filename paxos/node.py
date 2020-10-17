@@ -4,7 +4,7 @@ from copy import deepcopy
 from abc import ABC as Abstract, abstractmethod
 from paxos.network import Network
 from paxos.role import Role
-
+import pickle
 
 NodeID = NewType('NodeID', int)
 
@@ -50,8 +50,7 @@ class Node(Abstract):
         This process blocks the paxos.
         """
         message_raw = self.__receiver_socket.recv(Network.SOCKET_BUFFSIZE)
-        message = Message()
-        raise NotImplementedError
+        message = pickle.loads(message_raw)
         return message
 
 
@@ -59,11 +58,10 @@ class Node(Abstract):
         """
         Sends message to the group.
         """
-
         receiver_address = self.__net[message.receiver_role]
-        message_raw = "serialized message"
+        message_raw = pickle.dumps(obj=message)
+
         self.__sender_socket.sendto(message_raw, receiver_address)
-        raise NotImplementedError
 
     # ---- Public abstract methods ---- #
 
