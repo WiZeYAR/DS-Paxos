@@ -5,7 +5,7 @@ from typing import Tuple
 
 from paxos.message_type import MessageType
 from paxos.role import Role
-import paxos.node
+from paxos.node import Node, NodeID
 
 # Round ID type.
 # This is a measure of message "Freshness".
@@ -38,7 +38,7 @@ class Message(Abstract):
     # ---- Constructors ---- #
 
     def __init__(self,
-                 sender: paxos.node.Node,
+                 sender: Node,
                  receiver_role: Role,
                  message_type: MessageType
                  ) -> None:
@@ -53,7 +53,7 @@ class Message(Abstract):
     # ---- Public readonly fields ---- #
 
     @property
-    def sender_id(self) -> paxos.node.NodeID:
+    def sender_id(self) -> NodeID:
         """
         Gets the id of the
         """
@@ -82,7 +82,7 @@ class Message(Abstract):
 
 class Prepare(Message):
     def __init__(self,
-                 sender: paxos.node.Node,
+                 sender: Node,
                  receiver_role: Role,
                  payload: PreparePayload
                  ) -> None:
@@ -96,7 +96,7 @@ class Prepare(Message):
 
 class Promise(Message):
     def __init__(self,
-                 sender: paxos.node.Node,
+                 sender: Node,
                  receiver_role: Role,
                  payload: PromisePayload
                  ) -> None:
@@ -110,7 +110,7 @@ class Promise(Message):
 
 class Propose(Message):
     def __init__(self,
-                 sender: paxos.node.Node,
+                 sender: Node,
                  receiver_role: Role,
                  payload: ProposePayload
                  ) -> None:
