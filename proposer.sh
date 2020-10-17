@@ -2,7 +2,7 @@
 
 # ---- VARIABLES ---- #
 NETWORK_SIZE=3
-SELF_ROLE="learner"
+SELF_ROLE="proposer"
 SELF_ID=$1
 CONFIG_PATH=$2
 
