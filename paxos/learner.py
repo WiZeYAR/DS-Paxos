@@ -9,6 +9,6 @@ class Learner(Node):
         super().__init__(id, Role.LEARNER, network)
 
     def run(self) -> NoReturn:
-        print(f'Entering paxos in a role of acceptor {self.id}')
+        print(f'Entering paxos in a role of learner {self.id}')
         while True:
             pass

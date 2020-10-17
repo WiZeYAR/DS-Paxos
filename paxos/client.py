@@ -9,6 +9,6 @@ class Client(Node):
         super().__init__(id, Role.CLIENT, network)
 
     def run(self) -> NoReturn:
-        print(f'Entering paxos in a role of acceptor {self.id}')
+        print(f'Entering paxos in a role of client {self.id}')
         while True:
             pass
