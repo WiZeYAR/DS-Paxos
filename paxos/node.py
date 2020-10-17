@@ -1,4 +1,4 @@
-from typing import NoReturn, NewType
+from typing import NoReturn, NewType, TypeVar
 from copy import deepcopy
 from abc import ABC as Abstract, abstractmethod
 from paxos.network import Network
@@ -9,9 +9,9 @@ import pickle
 
 NodeID = NewType('NodeID', int)
 
+MessageT = TypeVar('MessageT', bound='Message')
 
 class Node(Abstract):
-
     # ---- Constructor ---- #
 
     def __init__(self,
@@ -43,8 +43,9 @@ class Node(Abstract):
     def net(self) -> Network:
         return self.__net
 
+
     # ---- Public methods ---- #
-    def listen(self) -> 'Message':
+    def listen(self) -> MessageT:
         """
         Starts listening on the network.
         When message is received -- returns it.
@@ -55,7 +56,7 @@ class Node(Abstract):
         return message
 
 
-    def send(self, group: Role, message: 'Message') -> None:
+    def send(self, group: Role, message: MessageT) -> None:
         """
         Sends message to the group.
         """
