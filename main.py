@@ -52,7 +52,8 @@ with open(config_path) as file:
             continue
         group, addr, port, *_ = line.split(' ')
         groups[group] = NetworkGroup((addr, int(port)))
-    network = Network(groups['clients'],
+    network = Network(network_size,
+                      groups['clients'],
                       groups['proposers'],
                       groups['acceptors'],
                       groups['learners'])
@@ -77,6 +78,10 @@ Current network state:
 ''')
 
 # ---- SETTING UP INSTANCE ---- #
-paxos_node: Node
-if self_role == 'client':
-    paxos_node = Client()
+paxos_node: Node = (Client(self_id, network) if self_role == 'client'
+                    else Proposer(self_id, network) if self_role == 'proposer'
+                    else Acceptor(self_id, network) if self_role == 'acceptor'
+                    else Learner(self_id, network))
+
+# ---- RUNNING THE INSTANCE ---- #
+paxos_node.run()
