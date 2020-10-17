@@ -28,15 +28,15 @@ class Node(Abstract):
 
     @property
     def id(self) -> NodeID:
-        deepcopy(self.__id)
+        return deepcopy(self.__id)
 
     @property
     def role(self) -> Role:
-        deepcopy(self.__role)
+        return deepcopy(self.__role)
 
     @property
     def net(self) -> Network:
-        self.__net
+        return self.__net
 
     # ---- Public methods ---- #
 
