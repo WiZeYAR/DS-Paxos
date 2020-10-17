@@ -9,4 +9,6 @@ class Proposer(Node):
         super().__init__(id, Role.PROPOSER, network)
 
     def run(self) -> NoReturn:
-        pass
+        print(f'Entering paxos in a role of acceptor {self.id}')
+        while True:
+            pass
