@@ -29,7 +29,6 @@ ProposePayload = NewType('ProposePayload', Tuple[RoundID, PaxosValue])
 AcceptPayload = NewType('AcceptPayload', Tuple[RoundID, PaxosValue])
 
 
-
 class Message(Abstract):
     """
     Immutable message type, which is composed and received by Nodes.
@@ -122,3 +121,29 @@ class Propose(Message):
         return self.__payload
 
 
+class Accept(Message):
+    def __init__(self,
+                 sender: Node,
+                 receiver_role: Role,
+                 payload: AcceptPayload
+                 ) -> None:
+        super().__init__(sender, receiver_role, message_type=MessageType.ACCEPT)
+        self.__payload = payload
+
+    @property
+    def payload(self) -> AcceptPayload:
+        return self.__payload
+
+
+class ClientPropose(Message):
+    def __init__(self,
+                 sender: Node,
+                 receiver_role: Role,
+                 payload: PaxosValue
+                 ) -> None:
+        super().__init__(sender, receiver_role, message_type=MessageType.CLIENT_PROPOSE)
+        self.__payload = payload
+
+    @property
+    def payload(self) -> PaxosValue:
+        return self.__payload

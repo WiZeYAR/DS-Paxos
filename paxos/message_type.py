@@ -5,7 +5,8 @@ class MessageType(Enum):
     """
     The type defining the kind of messages sent by Paxos nodes
     """
-    PREPARE = 0  # Client paxos
-    PROMISE = 1  # Proposer paxos
-    PROPOSE = 2  # Acceptor paxos
-    ACCEPT = 3  # Learner
+    CLIENT_PROPOSE = 4
+    PREPARE = 0
+    PROMISE = 1
+    PROPOSE = 2
+    ACCEPT = 3
