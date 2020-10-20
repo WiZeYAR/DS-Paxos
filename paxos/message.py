@@ -147,3 +147,17 @@ class ClientPropose(Message):
     @property
     def payload(self) -> PaxosValue:
         return self.__payload
+
+
+class Deliver(Message):
+    def __init__(self,
+                 sender: Node,
+                 receiver_role: Role,
+                 payload: PaxosValue
+                 ) -> None:
+        super().__init__(sender, receiver_role, message_type=MessageType.DELIVER)
+        self.__payload = payload
+
+    @property
+    def payload(self) -> PaxosValue:
+        return self.__payload

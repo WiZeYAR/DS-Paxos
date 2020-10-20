@@ -5,7 +5,7 @@ from .node import NodeID, Node, MessageT
 from .message_type import MessageType
 from .message import RoundID, PaxosValue, ClientPropose
 from .message import PreparePayload, Prepare, Propose, ProposePayload
-from .message import Promise, PromisePayload, Accept, AcceptPayload
+from .message import Promise, PromisePayload, Accept, AcceptPayload, Deliver
 
 # Naive solution to guarantee uniqueness of round ID between multiple proposers
 primes = [2, 3, 5, 7, 11, 13, 17]
@@ -88,7 +88,11 @@ class Proposer(Node):
             self._accept_messages_current_round += 1
         # If a majority of acceptor accepted the same value in this round, then decide it
         if self._accept_messages_current_round == self._majority:
-            print("DECIDED VALUE {}".format(payload[1]))
+            deliver_message: Deliver = Deliver(sender=self,
+                                               receiver_role=Role.LEARNER,
+                                               payload=payload[1])
+            self.send(Role.LEARNER, deliver_message)
+
 
     def run(self) -> NoReturn:
         print(f'Entering paxos in a role of proposer {self.id}')
