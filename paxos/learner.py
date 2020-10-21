@@ -21,5 +21,5 @@ class Learner(Node):
         print(f'Entering paxos in a role of learner {self.id}')
         while True:
             message: MessageT = self.listen()
-            if message in self._message_callbacks:
+            if message.message_type in self._message_callbacks:
                 self._message_callbacks[message.message_type](message)
