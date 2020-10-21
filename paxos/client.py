@@ -22,7 +22,7 @@ class Client(Node):
                                                            (PaxosValue(value), self._instance_id)
                                                        )
                                                        )
-        self.send(Role.PROPOSER, request_message)
+        self.send(request_message)
 
     def run(self) -> NoReturn:
         print(f'Entering paxos in a role of client {self.id}')

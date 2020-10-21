@@ -42,7 +42,7 @@ class Acceptor(Node):
                                                                        self._accepted_value,
                                                                        self._instance_id))
                                                )
-            self.send(group=Role.PROPOSER, message=promise_message)
+            self.send(message=promise_message)
             print("Sending Promise for round ID: {}".format(self._latest_round_ID))
 
     def accept(self, propose_message: Propose):
@@ -60,7 +60,7 @@ class Acceptor(Node):
                                             receiver_role=Role.PROPOSER,
                                             payload=AcceptPayload((self._accepted_round_ID, self._accepted_value, instance_id))
                                             )
-            self.send(Role.PROPOSER, accept_message)
+            self.send(accept_message)
 
     def run(self) -> NoReturn:
         print(f'Entering paxos in a role of acceptor {self.id}')

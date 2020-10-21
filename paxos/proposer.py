@@ -84,7 +84,7 @@ class Proposer(Node):
                                   receiver_role=Role.ACCEPTOR,
                                   payload=PreparePayload((self._round_id, self._instance_id))
                                   )
-        self.send(Role.ACCEPTOR, prepare_message)
+        self.send(prepare_message)
         print("Started new round with ID {0}, with desired value to propose {1}"
               .format(self._round_id, self._desired_value)
               )
@@ -115,7 +115,7 @@ class Proposer(Node):
                                       receiver_role=Role.ACCEPTOR,
                                       payload=ProposePayload((self._round_id, self._propose_next_value, instance_id))
                                       )
-            self.send(Role.ACCEPTOR, message=propose_message)
+            self.send(message=propose_message)
             print("Proposing value {0}".format(self._propose_next_value))
 
     def accept_phase(self, accept_message: Accept):
@@ -128,7 +128,7 @@ class Proposer(Node):
             deliver_message: Deliver = Deliver(sender=self,
                                                receiver_role=Role.LEARNER,
                                                payload=payload[1])
-            self.send(Role.LEARNER, deliver_message)
+            self.send(deliver_message)
             print("Sending DECIDE({0}) to learners for instance {1}".format(payload[1], instance_id))
 
             if not self._decided_instances[instance_id]:

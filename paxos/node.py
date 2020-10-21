@@ -56,7 +56,7 @@ class Node(Abstract):
         return message
 
 
-    def send(self, group: Role, message: MessageT) -> None:
+    def send(self, message: MessageT) -> None:
         """
         Sends message to the group.
         """
