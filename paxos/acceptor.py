@@ -3,7 +3,7 @@ from .role import Role
 from .network import Network
 from .node import NodeID, Node, MessageT
 from .message_type import MessageType
-from .message import RoundID, PaxosValue
+from .message import RoundID, PaxosValue, InstanceID
 from .message import PreparePayload, Prepare, PromisePayload, Promise, ProposePayload, Propose, AcceptPayload, Accept, Message
 
 
@@ -21,23 +21,34 @@ class Acceptor(Node):
             MessageType.PREPARE: self.promise,
             MessageType.PROPOSE: self.accept
         }
+        self._instance_id: InstanceID = InstanceID(0)
 
     def promise(self, prepare_message: Prepare):
         payload: PreparePayload = prepare_message.payload
         round_ID: RoundID = payload[0]
+        instance_id: InstanceID = payload[1]
+        if instance_id > self._instance_id:
+            self._instance_id = instance_id
+            self._latest_round_ID = RoundID(0)
+            self._accepted_value: PaxosValue = PaxosValue(0)
+            self._accepted_round_ID: RoundID = RoundID(0)
+
         if round_ID > self._latest_round_ID:
             self._latest_round_ID = round_ID
             promise_message: Promise = Promise(sender=self,
                                                receiver_role=Role.PROPOSER,
                                                payload=PromisePayload((self._latest_round_ID,
                                                                        self._accepted_round_ID,
-                                                                       self._accepted_value))
+                                                                       self._accepted_value,
+                                                                       self._instance_id))
                                                )
             self.send(group=Role.PROPOSER, message=promise_message)
             print("Sending Promise for round ID: {}".format(self._latest_round_ID))
 
     def accept(self, propose_message: Propose):
         payload: ProposePayload = propose_message.payload
+        instance_id: InstanceID = payload[2]
+
         if payload[0] >= self._latest_round_ID:
             if self._accepted_value != payload[1]:
                 print("Acceptor {0} accepted new value {1} for round {2}"
@@ -47,7 +58,7 @@ class Acceptor(Node):
             self._accepted_round_ID = payload[0]
             accept_message: Accept = Accept(sender=self,
                                             receiver_role=Role.PROPOSER,
-                                            payload=AcceptPayload((self._accepted_round_ID, self._accepted_value))
+                                            payload=AcceptPayload((self._accepted_round_ID, self._accepted_value, instance_id))
                                             )
             self.send(Role.PROPOSER, accept_message)
 

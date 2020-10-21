@@ -1,9 +1,10 @@
 from typing import NoReturn, List
+from collections import deque
 from .role import Role
 from .network import Network
 from .node import NodeID, Node, MessageT
 from .message_type import MessageType
-from .message import RoundID, PaxosValue, ClientPropose
+from .message import RoundID, PaxosValue, InstanceID, ClientPropose, ClientProposePayload
 from .message import PreparePayload, Prepare, Propose, ProposePayload
 from .message import Promise, PromisePayload, Accept, AcceptPayload, Deliver
 
@@ -22,7 +23,7 @@ class Proposer(Node):
         self._desired_value = None
         # Dictionary containing the callbacks to be executed for each type of message received
         self._message_callbacks = {
-            MessageType.CLIENT_PROPOSE: self.prepare_phase,
+            MessageType.CLIENT_PROPOSE: self.prepare_phase_multipaxos,
             MessageType.PROMISE: self.propose_phase,
             MessageType.ACCEPT: self.accept_phase
         }
@@ -34,8 +35,42 @@ class Proposer(Node):
         # Accept messages received from acceptors associated to this round
         self._accept_messages_current_round = 0
 
+        # The current Paxos instance
+        self._instance_id: InstanceID = InstanceID(0)
+        # Keeps track of which Paxos instances have been decided; instance 0 is a dummy decided instance
+        self._decided_instances: List[bool] = [True,]
+        self._client_requests = deque()
+
+
+    def prepare_phase_multipaxos(self, client_message: ClientPropose):
+        payload: ClientProposePayload = client_message.payload
+        payload_value: PaxosValue = payload[0]
+        payload_instance: InstanceID = payload[1]
+
+        # If a request from a client is received either for the current or a previous Paxos instance, then
+        # ignore it, since it means that a request for the current instance has already been received
+        if payload_instance <= self._instance_id:
+            return
+
+        # If previous instance was completed (DECIDE) start new instance,
+        # otherwise queue the current request and wait for its previous instance to complete
+        while len(self._decided_instances) < payload_instance:
+            self._decided_instances.append(False)
+
+        if self._decided_instances[payload_instance-1] == True:
+            self.prepare_phase(client_message)
+        else:
+            self._client_requests.append(client_message)
+
+
     def prepare_phase(self, client_message: ClientPropose) -> None:
-        self._desired_value = client_message.payload
+        payload: ClientProposePayload = client_message.payload
+        payload_value: PaxosValue = payload[0]
+        payload_instance: InstanceID = payload[1]
+
+        self._desired_value = payload_value
+        self._instance_id += 1
+        self._decided_instances.append(False)
 
         # Reset round variables
         self._propose_next_value = None
@@ -47,7 +82,7 @@ class Proposer(Node):
         self._round_id *= primes[self.id]
         prepare_message = Prepare(sender=self,
                                   receiver_role=Role.ACCEPTOR,
-                                  payload=PreparePayload((self._round_id,))
+                                  payload=PreparePayload((self._round_id, self._instance_id))
                                   )
         self.send(Role.ACCEPTOR, prepare_message)
         print("Started new round with ID {0}, with desired value to propose {1}"
@@ -59,6 +94,7 @@ class Proposer(Node):
         acceptor_round: RoundID = payload[0]
         round_accepted: RoundID = payload[1]
         value_accepted: PaxosValue = payload[2]
+        instance_id: InstanceID = payload[3]
 
         if acceptor_round == self._round_id:
             self._promises_received += 1
@@ -77,13 +113,14 @@ class Proposer(Node):
             # Send Propose to acceptors
             propose_message = Propose(sender=self,
                                       receiver_role=Role.ACCEPTOR,
-                                      payload=ProposePayload((self._round_id, self._propose_next_value))
+                                      payload=ProposePayload((self._round_id, self._propose_next_value, instance_id))
                                       )
             self.send(Role.ACCEPTOR, message=propose_message)
             print("Proposing value {0}".format(self._propose_next_value))
 
     def accept_phase(self, accept_message: Accept):
         payload: AcceptPayload = accept_message.payload
+        instance_id: InstanceID = payload[2]
         if payload[0] == self._round_id:
             self._accept_messages_current_round += 1
         # If a majority of acceptor accepted the same value in this round, then decide it
@@ -92,7 +129,22 @@ class Proposer(Node):
                                                receiver_role=Role.LEARNER,
                                                payload=payload[1])
             self.send(Role.LEARNER, deliver_message)
+            print("Sending DECIDE({0}) to learners for instance {1}".format(payload[1], instance_id))
 
+            if not self._decided_instances[instance_id]:
+                self._decided_instances[instance_id] = True
+                self.scan_requests_queue(instance_id)
+
+    def scan_requests_queue(self, instance_id: InstanceID):
+        next_request: ClientPropose = None
+        for request in self._client_requests:
+            request_instance: InstanceID = request.payload[1]
+            if (instance_id + 1) == request_instance:
+                next_request = request
+                break
+        if next_request is not None:
+            self._client_requests.remove(next_request)
+            self.prepare_phase(next_request)
 
     def run(self) -> NoReturn:
         print(f'Entering paxos in a role of proposer {self.id}')
