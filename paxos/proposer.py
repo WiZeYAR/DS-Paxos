@@ -27,7 +27,6 @@ class Proposer(Node):
             MessageType.PROMISE: self.propose_phase,
             MessageType.ACCEPT: self.accept_phase
         }
-        self._majority = 2
         # Promises received from acceptors corresponding to the current round
         self._promises_received = 0
         # Accepted value and round in which it was accepted of the latest accepted value among the received promises
@@ -40,7 +39,6 @@ class Proposer(Node):
         # Keeps track of which Paxos instances have been decided; instance 0 is a dummy decided instance
         self._decided_instances: List[bool] = [True,]
         self._client_requests = deque()
-
 
     def prepare_phase_multipaxos(self, client_message: ClientPropose):
         payload: ClientProposePayload = client_message.payload
@@ -102,7 +100,7 @@ class Proposer(Node):
                 self._latest_promise[0] = round_accepted
                 self._latest_promise[1] = value_accepted
 
-        if self._promises_received == self._majority:
+        if self._promises_received == self.net.quorum_size:
             # Set value to propose next to the value received accepted in the highest round, if any, otherwise use
             # value requested by the clint
             if self._latest_promise[0] == 0:
@@ -124,7 +122,7 @@ class Proposer(Node):
         if payload[0] == self._round_id:
             self._accept_messages_current_round += 1
         # If a majority of acceptor accepted the same value in this round, then decide it
-        if self._accept_messages_current_round == self._majority:
+        if self._accept_messages_current_round == self.net.quorum_size:
             deliver_message: Deliver = Deliver(sender=self,
                                                receiver_role=Role.LEARNER,
                                                payload=payload[1])

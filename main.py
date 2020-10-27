@@ -13,7 +13,7 @@ assert len(sys.argv) == 5, \
 (self_role,
  self_id,
  config_path,
- network_size) = (sys.argv[1],
+ quorum_size) = (sys.argv[1],
                   int(sys.argv[2]),
                   sys.argv[3],
                   int(sys.argv[4]))
@@ -21,24 +21,21 @@ assert len(sys.argv) == 5, \
 assert self_role in ['client', 'proposer', 'acceptor', 'learner'], \
     'Argument at index 1 must define the paxos\'s role'
 
-assert self_id >= 0, \
+assert self_id > 0, \
     'Argument at index 2 must be a number, defining paxos\'s id, and must not be negative'
 
 assert os.path.isfile(config_path), \
     'Argument at index 3 must point to the file'
 
-assert network_size > 2, \
-    'Argument at index 4 must define the size of a network, and must be bigger than 2'
-
-assert int(sys.argv[2]) < int(sys.argv[4]) if self_role == 'acceptor' else True, \
-    'Size of the network must be strictly bigger than the acceptor\'s paxos id'
+assert quorum_size > 0, \
+    'Argument at index 4 must define the size of the quorum of acceptors in the network, and must be bigger than 0'
 
 print(f'''
 Current paxos state: 
     Role:\t\t{self_role}
     Id:\t\t\t{self_id}
     Config:\t\t{config_path}
-    Network size:\t{network_size}
+    Quorum size:\t{quorum_size}
 ''')
 
 # ---- SETTING UP NETWORK ---- #
@@ -52,7 +49,7 @@ with open(config_path) as file:
             continue
         group, addr, port, *_ = line.split()
         groups[group] = NetworkGroup((addr, int(port)))
-    network = Network(network_size,
+    network = Network(quorum_size,
                       groups['clients'],
                       groups['proposers'],
                       groups['acceptors'],
@@ -62,7 +59,7 @@ assert network is not None, 'Failed to parse network config file'
 
 print(f'''
 Current network state:
-    Size:\t\t{network_size}
+    Quorum size:\t\t{quorum_size}
     Clients:
         Addr: {network[Role.CLIENT][0]}
         Port: {network[Role.CLIENT][1]}
