@@ -11,4 +11,4 @@ class MessageType(Enum):
     PROPOSE = 2
     ACCEPT = 3
     CLIENT_PROPOSE = 4
-    DELIVER = 5
+    DECIDE = 5

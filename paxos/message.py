@@ -15,9 +15,11 @@ RoundID = NewType('RoundID', int)
 # Candidate value to be decided by Paxos
 PaxosValue = NewType('PaxosValue', int)
 
+
 # PInstance ID.
 # This explains, to which paxos agreement instance this message belong.
 InstanceID = NewType('InstanceID', int)
+
 
 # Message payload.
 # This is a package, sent in a datagram.
@@ -28,6 +30,7 @@ PromisePayload = NewType('PromisePayload', Tuple[RoundID, RoundID, PaxosValue, I
 ProposePayload = NewType('ProposePayload', Tuple[RoundID, PaxosValue, InstanceID])
 AcceptPayload = NewType('AcceptPayload', Tuple[RoundID, PaxosValue, InstanceID])
 ClientProposePayload = NewType('ClientProposePayload', Tuple[PaxosValue, InstanceID])
+DecidePayload = NewType('DecidePayload', Tuple[PaxosValue, InstanceID])
 
 
 class Message(Abstract):
@@ -150,15 +153,15 @@ class ClientPropose(Message):
         return self.__payload
 
 
-class Deliver(Message):
+class Decide(Message):
     def __init__(self,
                  sender: Node,
                  receiver_role: Role,
-                 payload: PaxosValue
+                 payload: DecidePayload
                  ) -> None:
-        super().__init__(sender, receiver_role, message_type=MessageType.DELIVER)
+        super().__init__(sender, receiver_role, message_type=MessageType.DECIDE)
         self.__payload = payload
 
     @property
-    def payload(self) -> PaxosValue:
+    def payload(self) -> DecidePayload:
         return self.__payload
