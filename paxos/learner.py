@@ -3,7 +3,7 @@ from .role import Role
 from .network import Network
 from .node import NodeID, Node, MessageT
 from .message import Deliver, MessageType, PaxosValue
-
+import sys
 
 class Learner(Node):
     def __init__(self, id: NodeID, network: Network) -> None:
@@ -15,10 +15,11 @@ class Learner(Node):
 
     def deliver(self, deliver_message: Deliver):
         self._delivered_value = deliver_message.payload
-        print("DECIDED VALUE {}".format(self._delivered_value))
+        self.log("DECIDED value {0}".format(self._delivered_value))
+        sys.stdout.flush()
 
     def run(self) -> NoReturn:
-        print(f'Entering paxos in a role of learner {self.id}')
+        self.log("Start running")
         while True:
             message: MessageT = self.listen()
             if message.message_type in self._message_callbacks:

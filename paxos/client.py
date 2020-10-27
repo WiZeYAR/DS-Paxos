@@ -25,7 +25,7 @@ class Client(Node):
         self.send(request_message)
 
     def run(self) -> NoReturn:
-        print(f'Entering paxos in a role of client {self.id}')
+        self.log("Start running...")
         while True:
             for value in sys.stdin:
                 self.request_value(value.strip())

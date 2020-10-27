@@ -43,7 +43,7 @@ class Acceptor(Node):
                                                                        self._instance_id))
                                                )
             self.send(message=promise_message)
-            print("Sending Promise for round ID: {}".format(self._latest_round_ID))
+            self.log("Sending Promise for round {0} and instance {1}".format(self._latest_round_ID, self._instance_id))
 
     def accept(self, propose_message: Propose):
         payload: ProposePayload = propose_message.payload
@@ -51,8 +51,8 @@ class Acceptor(Node):
 
         if payload[0] >= self._latest_round_ID:
             if self._accepted_value != payload[1]:
-                print("Acceptor {0} accepted new value {1} for round {2}"
-                      .format(self.id, payload[1], payload[0])
+                self.log("Accepted value {0} for round {1} and instance {2}"
+                      .format(payload[1], payload[0], instance_id)
                       )
             self._accepted_value = payload[1]
             self._accepted_round_ID = payload[0]
@@ -63,7 +63,7 @@ class Acceptor(Node):
             self.send(accept_message)
 
     def run(self) -> NoReturn:
-        print(f'Entering paxos in a role of acceptor {self.id}')
+        self.log("Start running...")
 
         while True:
             message: MessageT = self.listen()

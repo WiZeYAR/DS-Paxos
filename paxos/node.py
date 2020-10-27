@@ -5,6 +5,7 @@ from paxos.network import Network
 from paxos.role import Role
 
 import pickle
+import logging
 
 
 NodeID = NewType('NodeID', int)
@@ -29,6 +30,13 @@ class Node(Abstract):
         self.__receiver_socket = Network.multicast_receiver_socket(group_sock_address)
         self.__sender_socket = Network.udp_sender_socket()
 
+        # --- Create logger --- #
+        self.__logger = logging.getLogger("{0}_{1}".format(self.__role.value, self.__id), )
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter('%(name)s - %(message)s'))
+        self.__logger.addHandler(handler)
+        self.__logger.setLevel(logging.DEBUG)
+
     # ---- Public properties ---- #
 
     @property
@@ -43,6 +51,8 @@ class Node(Abstract):
     def net(self) -> Network:
         return self.__net
 
+    def log(self, message: str):
+        self.__logger.debug(message)
 
     # ---- Public methods ---- #
     def listen(self) -> MessageT:

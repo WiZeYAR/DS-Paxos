@@ -37,7 +37,7 @@ class Proposer(Node):
         # The current Paxos instance
         self._instance_id: InstanceID = InstanceID(0)
         # Keeps track of which Paxos instances have been decided; instance 0 is a dummy decided instance
-        self._decided_instances: List[bool] = [True,]
+        self._decided_instances: List[bool] = [True, ]
         self._client_requests = deque()
 
     def prepare_phase_multipaxos(self, client_message: ClientPropose):
@@ -55,11 +55,10 @@ class Proposer(Node):
         while len(self._decided_instances) < payload_instance:
             self._decided_instances.append(False)
 
-        if self._decided_instances[payload_instance-1] == True:
+        if self._decided_instances[payload_instance - 1] == True:
             self.prepare_phase(client_message)
         else:
             self._client_requests.append(client_message)
-
 
     def prepare_phase(self, client_message: ClientPropose) -> None:
         payload: ClientProposePayload = client_message.payload
@@ -71,21 +70,22 @@ class Proposer(Node):
         self._decided_instances.append(False)
 
         # Reset round variables
+        self._round_id = 1
         self._propose_next_value = None
         self._promises_received = 0
         self._latest_promise: List[RoundID, PaxosValue] = [RoundID(0), None]
         self._accept_messages_current_round = 0
 
         # Start new round
-        self._round_id *= primes[self.id]
+        self._round_id *= primes[self.id - 1]
         prepare_message = Prepare(sender=self,
                                   receiver_role=Role.ACCEPTOR,
                                   payload=PreparePayload((self._round_id, self._instance_id))
                                   )
         self.send(prepare_message)
-        print("Started new round with ID {0}, with desired value to propose {1}"
-              .format(self._round_id, self._desired_value)
-              )
+        self.log("Started round {0} for instance {1}, with desired value to propose {2}"
+                 .format(self._round_id, self._instance_id, self._desired_value)
+                 )
 
     def propose_phase(self, promise_message: Promise) -> None:
         payload: PromisePayload = promise_message.payload
@@ -114,7 +114,7 @@ class Proposer(Node):
                                       payload=ProposePayload((self._round_id, self._propose_next_value, instance_id))
                                       )
             self.send(message=propose_message)
-            print("Proposing value {0}".format(self._propose_next_value))
+            self.log("Proposing value {0} for instance {1}".format(self._propose_next_value, self._instance_id))
 
     def accept_phase(self, accept_message: Accept):
         payload: AcceptPayload = accept_message.payload
@@ -127,7 +127,7 @@ class Proposer(Node):
                                                receiver_role=Role.LEARNER,
                                                payload=payload[1])
             self.send(deliver_message)
-            print("Sending DECIDE({0}) to learners for instance {1}".format(payload[1], instance_id))
+            self.log("Sending DECIDE({0}) to learners for instance {1}".format(payload[1], instance_id))
 
             if not self._decided_instances[instance_id]:
                 self._decided_instances[instance_id] = True
@@ -145,7 +145,7 @@ class Proposer(Node):
             self.prepare_phase(next_request)
 
     def run(self) -> NoReturn:
-        print(f'Entering paxos in a role of proposer {self.id}')
+        self.log('Start running...')
 
         while True:
             message: MessageT = self.listen()
