@@ -1,5 +1,6 @@
 from typing import NoReturn, List, Dict
-from collections import deque
+import time
+
 from .role import Role
 from .network import Network
 from .node import NodeID, Node, MessageT
@@ -8,11 +9,14 @@ from .message import RoundID, PaxosValue, InstanceID, ClientPropose, ClientPropo
 from .message import PreparePayload, Prepare, Propose, ProposePayload
 from .message import Promise, PromisePayload, Accept, AcceptPayload, Decide, DecidePayload
 
-# Naive solution to guarantee uniqueness of round ID between multiple proposers
-primes = [2, 3, 5, 7, 11, 13, 17]
 
 
 class Proposer(Node):
+    # Naive solution to guarantee uniqueness of round ID between multiple proposers
+    primes = [2, 3, 5, 7, 11, 13, 17]
+    BASE_TIMEOUT = 0.33
+    TIMEOUT_GROWTH_FACTOR = 1.1
+
     def __init__(self, id: NodeID, network: Network) -> None:
         super().__init__(id, Role.PROPOSER, network)
         # The ID of the round currently initiated by the proposer for each undecided instance
@@ -31,6 +35,11 @@ class Proposer(Node):
         self._undecided_instances: List[InstanceID] = []
         self._client_requests: Dict[InstanceID, PaxosValue] = {}
         self._decided_values: Dict[InstanceID, PaxosValue] = {}
+
+        # The timeout defines for each instance the maximum time (in sec) that a round can take; if exceeded the
+        # proposer starts a new round with higher timeout
+        self._round_timeouts: Dict[InstanceID, float] = {}
+        self._last_prepare_time: Dict[InstanceID, float] = {}
 
         # Dictionary containing the callbacks to be executed for each type of message received
         self._message_callbacks = {
@@ -54,6 +63,8 @@ class Proposer(Node):
             self._value_to_propose[instance] = None
             self._promises_received[instance] = 0
             self._latest_promise[instance] = [RoundID(0), None]
+            self._round_timeouts[instance] = Proposer.BASE_TIMEOUT
+
             self._accept_messages_current_round[instance] = 0
 
             self.prepare_phase_parallel(instance)
@@ -64,7 +75,7 @@ class Proposer(Node):
 
     def prepare_phase_parallel(self, instance: InstanceID) -> None:
         # Start new round
-        self._round_id[instance] *= primes[self.id - 1]
+        self._round_id[instance] *= Proposer.primes[self.id - 1]
         # Discard all promises and accept messages received for previous round
         self._promises_received[instance] = 0
         self._accept_messages_current_round[instance] = 0
@@ -74,6 +85,8 @@ class Proposer(Node):
                                   payload=PreparePayload((self._round_id[instance], instance))
                                   )
         self.send(prepare_message)
+        # Register time of prepare
+        self._last_prepare_time[instance] = time.time()
         self.log("Started round {0} for instance {1}, with requested value {2}"
                  .format(self._round_id[instance], instance, self._client_requests[instance])
                  )
@@ -168,7 +181,7 @@ class Proposer(Node):
         self._accept_messages_current_round = 0
 
         # Start new round
-        self._round_id *= primes[self.id - 1]
+        self._round_id *= Proposer.primes[self.id - 1]
         prepare_message = Prepare(sender=self,
                                   receiver_role=Role.ACCEPTOR,
                                   payload=PreparePayload((self._round_id, self._instance_id))
@@ -235,14 +248,25 @@ class Proposer(Node):
             self._client_requests.remove(next_request)
             self.prepare_phase(next_request)
 
+    #
+    def check_for_timeouts(self) -> None:
+        """
+        Check for the first undecided instance that timed out and start a new round for it
+        :return:
+        """
+        for instance in self._undecided_instances:
+            if (time.time() - self._last_prepare_time[instance]) > self._round_timeouts[instance]:
+                print('\033[93m' + "Instance {0} round {1} exceeded timeout!".format(instance, self._round_id[instance]) + "\033[0m")
+                self._round_timeouts[instance] *= Proposer.TIMEOUT_GROWTH_FACTOR
+                self.prepare_phase_parallel(instance)
+                break
+
     def run(self) -> NoReturn:
         self.log('Start running...')
-
-        # Multithread propose first undecided instance
 
         while True:
             message: MessageT = self.listen()
             if message is not None and message.message_type in self._message_callbacks:
                 self._message_callbacks[message.message_type](message)
 
-            #self.prepare_phase_parallel(self.first_undecided_instance())
+            self.check_for_timeouts()
