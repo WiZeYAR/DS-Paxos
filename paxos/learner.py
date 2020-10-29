@@ -1,9 +1,11 @@
+#!/usr/bin/env python3
+
 from typing import NoReturn, Dict
 from .role import Role
 from .network import Network
 from .node import NodeID, Node, MessageT
 from .message import Decide, DecidePayload, MessageType, PaxosValue, InstanceID
-import sys
+import pickle
 
 class Learner(Node):
     def __init__(self, id: NodeID, network: Network) -> None:
@@ -20,8 +22,11 @@ class Learner(Node):
 
         self._decided_values[instance] = decided_value
         self.log("DECIDED value {0} for instance {1}".format(self._decided_values[instance], instance))
-        print("DECIDED value {0} for instance {1}".format(self._decided_values[instance], instance))
-        sys.stdout.flush()
+
+        file = open('learner{}_decided_value'.format(self.id), "wb")
+        pickle.dump(dict(sorted(self._decided_values.items())), file=file)
+        file.close()
+
 
     def run(self) -> NoReturn:
         self.log("Start running...")
@@ -29,3 +34,5 @@ class Learner(Node):
             message: MessageT = self.listen()
             if message.message_type in self._message_callbacks:
                 self._message_callbacks[message.message_type](message)
+
+
