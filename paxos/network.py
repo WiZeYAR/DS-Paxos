@@ -46,6 +46,7 @@ class Network:
         Create multicast receiver socket
         """
         mcast_receiver_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        mcast_receiver_sock.setblocking(False)
         mcast_receiver_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         mcast_receiver_sock.bind(socket_address)
 

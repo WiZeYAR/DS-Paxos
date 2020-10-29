@@ -121,5 +121,5 @@ class Acceptor(Node):
 
         while True:
             message: MessageT = self.listen()
-            if message.message_type in self._message_callbacks:
+            if message is not None and message.message_type in self._message_callbacks:
                 self._message_callbacks[message.message_type](message)

@@ -6,6 +6,7 @@ from paxos.role import Role
 
 import pickle
 import logging
+import socket
 
 
 NodeID = NewType('NodeID', int)
@@ -61,8 +62,13 @@ class Node(Abstract):
         When message is received -- returns it.
         This process blocks the paxos.
         """
-        message_raw = self.__receiver_socket.recv(Network.SOCKET_BUFFSIZE)
-        message = pickle.loads(message_raw)
+        message = None
+        try:
+            message_raw = self.__receiver_socket.recv(Network.SOCKET_BUFFSIZE)
+        except socket.error:
+            pass
+        else:
+            message = pickle.loads(message_raw)
         return message
 
 
