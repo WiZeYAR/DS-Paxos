@@ -165,3 +165,17 @@ class Decide(Message):
     @property
     def payload(self) -> DecidePayload:
         return self.__payload
+
+
+class RequestAck(Message):
+    def __init__(self,
+                 sender: Node,
+                 receiver_role: Role,
+                 payload: InstanceID
+                 ) -> None:
+        super().__init__(sender, receiver_role, message_type=MessageType.REQUEST_ACK)
+        self.__payload = payload
+
+    @property
+    def payload(self) -> InstanceID:
+        return self.__payload

@@ -8,6 +8,7 @@ from .message_type import MessageType
 from .message import RoundID, PaxosValue, InstanceID, ClientPropose, ClientProposePayload
 from .message import PreparePayload, Prepare, Propose, ProposePayload
 from .message import Promise, PromisePayload, Accept, AcceptPayload, Decide, DecidePayload
+from .message import RequestAck
 
 
 
@@ -52,6 +53,13 @@ class Proposer(Node):
         payload: ClientProposePayload = client_request.payload
         value: PaxosValue = payload[0]
         instance: InstanceID = payload[1]
+
+        # Send an ACK to the clients confirming a request for the current instance has been received
+        ack_message: RequestAck = RequestAck(sender=self,
+                                             receiver_role=Role.CLIENT,
+                                             payload=instance)
+        self.send(ack_message)
+
 
         # If a request is received for a new instance, add the instance to the list of undecided ones
         # and save the corresponding value to propose then initialize new instance
@@ -248,7 +256,6 @@ class Proposer(Node):
             self._client_requests.remove(next_request)
             self.prepare_phase(next_request)
 
-    #
     def check_for_timeouts(self) -> None:
         """
         Check for the first undecided instance that timed out and start a new round for it
