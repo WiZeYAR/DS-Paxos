@@ -4,14 +4,16 @@ from typing import NoReturn, Dict
 from .role import Role
 from .network import Network
 from .node import NodeID, Node, MessageT
-from .message import MessageType, RoundID, PaxosValue, InstanceID, Accept, AcceptPayload
+from .message import MessageType, RoundID, PaxosValue, InstanceID
+from .message import Accept, AcceptPayload, Decide, DecidePayload, RequestAck
 import pickle
 
 class Learner(Node):
     def __init__(self, id: NodeID, network: Network) -> None:
         super().__init__(id, Role.LEARNER, network)
         self._message_callbacks = {
-            MessageType.ACCEPT: self.accept_phase_parallel
+            MessageType.ACCEPT: self.accept_phase_parallel,
+            MessageType.DECIDE: self.decide
         }
         self._decided_values: Dict[InstanceID, PaxosValue] = {}
         self._accept_messages_received: Dict[InstanceID, Dict[RoundID, int]] = {}
@@ -37,6 +39,30 @@ class Learner(Node):
             file = open('learner{}_decided_value'.format(self.id), "wb")
             pickle.dump(dict(sorted(self._decided_values.items())), file=file)
             file.close()
+
+            # send ACK to proposers for current instance
+            ack_message: RequestAck = RequestAck(sender=self,
+                                                 receiver_role=Role.PROPOSER,
+                                                 payload=instance)
+            self.send(ack_message)
+
+    def decide(self, decide_message: Decide) -> None:
+        payload: DecidePayload = decide_message.payload
+        decided_value: PaxosValue = payload[0]
+        instance: InstanceID = payload[1]
+
+        if instance not in self._decided_values.keys():
+            self._decided_values[instance] = decided_value
+            file = open('learner{}_decided_value'.format(self.id), "wb")
+            pickle.dump(dict(sorted(self._decided_values.items())), file=file)
+            file.close()
+
+            # send ACK to proposers for current instance
+            ack_message: RequestAck = RequestAck(sender=self,
+                                                 receiver_role=Role.PROPOSER,
+                                                 payload=instance)
+            self.send(ack_message)
+
 
     def run(self) -> NoReturn:
         self.log("Start running...")

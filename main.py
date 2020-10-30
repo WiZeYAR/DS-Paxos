@@ -6,10 +6,10 @@ import sys
 import os
 
 # ---- OBTAINING PARAMETERS ---- #
-print('Obtaining parameters')
+#print('Obtaining parameters')
 
-assert len(sys.argv) == 5, \
-    'There must be exactly 5 program arguments (including the program name)'
+assert len(sys.argv) >= 5, \
+    'There must be at least 5 program arguments (including the program name)'
 (self_role,
  self_id,
  config_path,
@@ -17,6 +17,11 @@ assert len(sys.argv) == 5, \
                   int(sys.argv[2]),
                   sys.argv[3],
                   int(sys.argv[4]))
+
+if len(sys.argv) >= 6:
+    plr = float(sys.argv[5])
+else:
+    plr = 0.0
 
 assert self_role in ['client', 'proposer', 'acceptor', 'learner'], \
     'Argument at index 1 must define the paxos\'s role'
@@ -30,6 +35,7 @@ assert os.path.isfile(config_path), \
 assert quorum_size > 0, \
     'Argument at index 4 must define the size of the quorum of acceptors in the network, and must be bigger than 0'
 
+"""
 print(f'''
 Current paxos state: 
     Role:\t\t{self_role}
@@ -40,6 +46,7 @@ Current paxos state:
 
 # ---- SETTING UP NETWORK ---- #
 print('Performing network setup')
+"""
 
 network: Network = None
 with open(config_path) as file:
@@ -57,6 +64,7 @@ with open(config_path) as file:
 
 assert network is not None, 'Failed to parse network config file'
 
+"""
 print(f'''
 Current network state:
     Quorum size:\t\t{quorum_size}
@@ -73,12 +81,14 @@ Current network state:
         Addr: {network[Role.LEARNER][0]}
         Port: {network[Role.LEARNER][1]}
 ''')
+"""
 
 # ---- SETTING UP INSTANCE ---- #
-paxos_node: Node = (Client(self_id, network) if self_role == 'client'
-                    else Proposer(self_id, network) if self_role == 'proposer'
-                    else Acceptor(self_id, network) if self_role == 'acceptor'
-                    else Learner(self_id, network))
+paxos_node: Node = (Client(self_id, network, plr) if self_role == 'client'
+                    else Proposer(self_id, network, plr) if self_role == 'proposer'
+                    else Acceptor(self_id, network, plr) if self_role == 'acceptor'
+                    else Learner(self_id, network, plr)
+                    )
 
 # ---- RUNNING THE INSTANCE ---- #
 paxos_node.run()

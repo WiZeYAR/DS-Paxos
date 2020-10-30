@@ -13,3 +13,4 @@ class MessageType(Enum):
     CLIENT_PROPOSE = 4
     DECIDE = 5
     REQUEST_ACK = 6
+    DECIDE_ACK = 7

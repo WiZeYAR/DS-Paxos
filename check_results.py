@@ -31,9 +31,12 @@ def load_decided_values(n_learners: int, n_values: int) -> List[Dict[int,int]]:
     return decided_values
 
 def print_decided_values(decided_values: List[Dict[int, int]], n_values: int, n_learners: int) -> None:
-    for instance in range(1,n_values+1):
+    for instance in range(1, n_values+1):
+
+        str = ""
         for learner in range(n_learnes):
-            pass
+            str += "  {0}  ".format(decided_values[learner][instance])
+        print(str)
 
 if __name__ == '__main__':
     assert len(sys.argv) >= 3,\
@@ -75,6 +78,12 @@ if __name__ == '__main__':
             break
 
 
+
+    print("Integrity: {0}".format(integrity))
+    print("Agreement: {0}".format(agreement))
+    print("Termination: {0}".format(termination))
+
+    print_decided_values(decided_values, n_values, n_learnes)
 
     print("Integrity: {0}".format(integrity))
     print("Agreement: {0}".format(agreement))
