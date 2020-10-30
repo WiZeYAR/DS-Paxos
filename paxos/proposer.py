@@ -142,15 +142,9 @@ class Proposer(Node):
 
             # if a quorum of acceptor accepted this value set this instance as decided
             if self._accept_messages_current_round[instance] == self.net.quorum_size:
-                decide_message: Decide = Decide(sender=self,
-                                                receiver_role=Role.LEARNER,
-                                                payload=DecidePayload((accepted_value, instance))
-                                                )
-                self.send(decide_message)
-                self.log("Sending DECIDE({0}) to learners for instance {1}".format(accepted_value, instance))
-
                 self._undecided_instances.remove(instance)
                 self._decided_values[instance] = accepted_value
+
 
     def check_for_timeouts(self) -> None:
         """

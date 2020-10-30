@@ -67,14 +67,23 @@ class Acceptor(Node):
 
             self._accepted_value[instance] = proposed_value
             self._accepted_round_ID[instance] = round_id
-            accept_message: Accept = Accept(sender=self,
+            accept_message_proposers: Accept = Accept(sender=self,
                                             receiver_role=Role.PROPOSER,
                                             payload=AcceptPayload(
                                                 (self._accepted_round_ID[instance],
                                                  self._accepted_value[instance],
                                                  instance))
                                             )
-            self.send(accept_message)
+            self.send(accept_message_proposers)
+
+            accept_message_learners: Accept = Accept(sender=self,
+                                                      receiver_role=Role.LEARNER,
+                                                      payload=AcceptPayload(
+                                                          (self._accepted_round_ID[instance],
+                                                           self._accepted_value[instance],
+                                                           instance))
+                                                      )
+            self.send(accept_message_learners)
 
 
     def run(self) -> NoReturn:
