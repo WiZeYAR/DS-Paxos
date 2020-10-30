@@ -14,3 +14,4 @@ class MessageType(Enum):
     DECIDE = 5
     REQUEST_ACK = 6
     DECIDE_ACK = 7
+    HEARTBEAT = 8

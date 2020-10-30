@@ -192,3 +192,16 @@ class DecideAck(Message):
     @property
     def payload(self) -> InstanceID:
         return self.__payload
+
+class HeartBeat(Message):
+    def __init__(self,
+                 sender: Node,
+                 receiver_role: Role,
+                 payload: int
+                 ) -> None:
+        super().__init__(sender, receiver_role, message_type=MessageType.HEARTBEAT)
+        self.__payload = payload
+
+    @property
+    def payload(self) -> int:
+        return self.__payload
