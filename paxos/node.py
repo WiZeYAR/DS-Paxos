@@ -7,25 +7,30 @@ from paxos.role import Role
 import pickle
 import logging
 import socket
+import random
 
 
 NodeID = NewType('NodeID', int)
 
 MessageT = TypeVar('MessageT', bound='Message')
 
-class Node(Abstract):
+class Node(Abstract, ):
     # ---- Constructor ---- #
 
     def __init__(self,
                  id: NodeID,
                  role: Role,
-                 network: Network) -> None:
+                 network: Network,
+                 plr: float = 0.0) -> None:
         """
         Default constructor
         """
         self.__id = id
         self.__role = role
         self.__net = network
+
+        assert 0.0 <= plr < 1.0, "Package loss ratio should be between 0 and 1 (excluded)"
+        self._package_loss_ratio = plr
 
         group_sock_address = self.__net[self.__role]
         self.__receiver_socket = Network.multicast_receiver_socket(group_sock_address)
@@ -36,7 +41,7 @@ class Node(Abstract):
         handler = logging.StreamHandler()
         handler.setFormatter(logging.Formatter('%(name)s - %(message)s'))
         self.__logger.addHandler(handler)
-        self.__logger.setLevel(logging.DEBUG)
+        self.__logger.setLevel(logging.WARNING)
 
     # ---- Public properties ---- #
 
@@ -63,12 +68,17 @@ class Node(Abstract):
         This process blocks the paxos.
         """
         message = None
+        # Try to receive a message
         try:
             message_raw = self.__receiver_socket.recv(Network.SOCKET_BUFFSIZE)
         except socket.error:
             pass
+        # If no errors, aka, message received parse it
         else:
-            message = pickle.loads(message_raw)
+            # Randomly drop the incoming message according to the package loss ratio to emulate an unreliable network
+            # for debug purposes
+            if random.random() >= self._package_loss_ratio:
+                message = pickle.loads(message_raw)
         return message
 
 

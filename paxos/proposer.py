@@ -17,8 +17,8 @@ class Proposer(Node):
     BASE_TIMEOUT = 0.33
     TIMEOUT_GROWTH_FACTOR = 1.1
 
-    def __init__(self, id: NodeID, network: Network) -> None:
-        super().__init__(id, Role.PROPOSER, network)
+    def __init__(self, id: NodeID, network: Network, plr: float) -> None:
+        super().__init__(id, Role.PROPOSER, network, plr)
         # The ID of the round currently initiated by the proposer for each undecided instance
         self._round_id: Dict[InstanceID, RoundID] = {}
         # The values to be proposed in the next PROPOSE phase of each undecided instance

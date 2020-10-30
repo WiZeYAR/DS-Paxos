@@ -13,8 +13,8 @@ class Client(Node):
     BASE_TIMEOUT = 0.33
     TIMEOUT_GROWTH_FACTOR = 1.1
 
-    def __init__(self, id: NodeID, network: Network) -> None:
-        super().__init__(id, Role.CLIENT, network)
+    def __init__(self, id: NodeID, network: Network, plr: float) -> None:
+        super().__init__(id, Role.CLIENT, network, plr)
         self._instance_id: InstanceID = InstanceID(0)
         self._pending_requests: Dict[InstanceID, ClientPropose] = {}
 

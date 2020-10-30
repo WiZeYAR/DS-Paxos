@@ -8,8 +8,8 @@ from .message import PreparePayload, Prepare, PromisePayload, Promise, ProposePa
 
 
 class Acceptor(Node):
-    def __init__(self, id: NodeID, network: Network) -> None:
-        super().__init__(id, Role.ACCEPTOR, network)
+    def __init__(self, id: NodeID, network: Network, plr: float) -> None:
+        super().__init__(id, Role.ACCEPTOR, network, plr)
         self._started_instances: List[InstanceID] = []
         # Latest round the acceptor has participated in for each instance
         self._latest_round_ID: Dict[InstanceID, RoundID] = {}
@@ -58,6 +58,10 @@ class Acceptor(Node):
         round_id: RoundID = payload[0]
         proposed_value: PaxosValue = payload[1]
         instance: InstanceID = payload[2]
+
+        # Not received a promise for this instance yet, ignore
+        if instance not in self._started_instances:
+            return
 
         if round_id >= self._latest_round_ID[instance]:
             if self._accepted_value[instance] is not proposed_value:
