@@ -36,7 +36,7 @@ class Learner(Node):
             self._decided_values[instance] = accepted_value
             self.log("DECIDED value {0} for instance {1}".format(self._decided_values[instance], instance))
 
-            file = open('learner{}_decided_value'.format(self.id), "wb")
+            file = open('results/learner{}_decided_value'.format(self.id), "wb")
             pickle.dump(dict(sorted(self._decided_values.items())), file=file)
             file.close()
 
@@ -53,7 +53,7 @@ class Learner(Node):
 
         if instance not in self._decided_values.keys():
             self._decided_values[instance] = decided_value
-            file = open('learner{}_decided_value'.format(self.id), "wb")
+            file = open('results/learner{}_decided_value'.format(self.id), "wb")
             pickle.dump(dict(sorted(self._decided_values.items())), file=file)
             file.close()
 
