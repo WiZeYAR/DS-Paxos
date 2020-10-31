@@ -1,7 +1,7 @@
 from abc import ABC as Abstract, abstractmethod
 from copy import deepcopy
 from typing import NewType
-from typing import Tuple
+from typing import Tuple, List, Dict
 
 from paxos.message_type import MessageType
 from paxos.role import Role
@@ -15,11 +15,9 @@ RoundID = NewType('RoundID', int)
 # Candidate value to be decided by Paxos
 PaxosValue = NewType('PaxosValue', int)
 
-
 # PInstance ID.
 # This explains, to which paxos agreement instance this message belong.
 InstanceID = NewType('InstanceID', int)
-
 
 # Message payload.
 # This is a package, sent in a datagram.
@@ -180,6 +178,7 @@ class RequestAck(Message):
     def payload(self) -> InstanceID:
         return self.__payload
 
+
 class DecideAck(Message):
     def __init__(self,
                  sender: Node,
@@ -193,6 +192,7 @@ class DecideAck(Message):
     def payload(self) -> InstanceID:
         return self.__payload
 
+
 class HeartBeat(Message):
     def __init__(self,
                  sender: Node,
@@ -204,4 +204,32 @@ class HeartBeat(Message):
 
     @property
     def payload(self) -> int:
+        return self.__payload
+
+
+class CatchupRequest(Message):
+    def __init__(self,
+                 sender: Node,
+                 receiver_role: Role,
+                 payload: None
+                 ) -> None:
+        super().__init__(sender, receiver_role, message_type=MessageType.CATCHUP_REQUEST)
+        self.__payload = payload
+
+    @property
+    def payload(self) -> None:
+        return self.__payload
+
+
+class CatchupResponse(Message):
+    def __init__(self,
+                 sender: Node,
+                 receiver_role: Role,
+                 payload: Dict[InstanceID, PaxosValue]
+                 ) -> None:
+        super().__init__(sender, receiver_role, message_type=MessageType.CATCHUP_RESPONSE)
+        self.__payload = payload
+
+    @property
+    def payload(self) -> Dict[InstanceID, PaxosValue]:
         return self.__payload

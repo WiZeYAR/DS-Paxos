@@ -15,3 +15,5 @@ class MessageType(Enum):
     REQUEST_ACK = 6
     DECIDE_ACK = 7
     HEARTBEAT = 8
+    CATCHUP_REQUEST = 9
+    CATCHUP_RESPONSE = 10
