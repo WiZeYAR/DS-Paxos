@@ -14,10 +14,11 @@ import pickle
 class Proposer(Node):
     # Naive solution to guarantee uniqueness of round ID between multiple proposers
     primes = [2, 3, 5, 7, 11, 13, 17, 19 , 23, 29, 31]
-    BASE_TIMEOUT = 0.5
+    BASE_TIMEOUT = 1.5
     TIMEOUT_GROWTH_FACTOR = 2.0
     HEARBEAT_RATE = 0.33
     HEARTBEAT_TIMEOUT = 4.0
+    PREPARE_PHASE1_IN_ADVANCE = True
 
     def __init__(self, id: NodeID, network: Network, plr: float, lifetime:float) -> None:
         super().__init__(id, Role.PROPOSER, network, plr, lifetime)
@@ -54,6 +55,12 @@ class Proposer(Node):
         self._known_proposers: List[int] = [self.id]
         self._last_heartbeat_sent: float = 0.0
         self._last_heartbeat_leader: float = time.time()
+
+        # Pre-prepare phase 1 flag
+        self._phase1_preprepared: bool = False
+        self._phase1_preprepared_round: RoundID = None
+        self._enable_phase1_optimization = Proposer.PREPARE_PHASE1_IN_ADVANCE
+
 
         # Dictionary containing the callbacks to be executed for each type of message received
         self._message_callbacks = {
@@ -95,9 +102,48 @@ class Proposer(Node):
 
 
             if self.id == self._leader_id:
-                self.prepare_phase_parallel(instance)
+                if not self._enable_phase1_optimization:
+                    self.prepare_phase_parallel(instance)
+                    return
 
-    def prepare_phase_parallel(self, instance: InstanceID) -> None:
+                if self._phase1_preprepared is not True:
+                    self.pre_prepare_phase1(instance)
+
+                promise: Promise = Promise(sender=self,
+                                           receiver_role=Role.PROPOSER,
+                                           payload=PromisePayload((self._phase1_preprepared_round,
+                                                                   RoundID(0),
+                                                                   None,
+                                                                   instance))
+                                           )
+                self._round_id[instance] = self._phase1_preprepared_round
+                self._last_prepare_time[instance] = time.time()
+                self.propose_phase_parallel(promise_message=promise)
+
+
+
+    def pre_prepare_phase1(self, instance: InstanceID):
+        """
+        Run a prepare phase for this instance and wait to get a promises from a quorum, while still sending and
+        receiving heartbeats :param instance: :return:
+        """
+        self.prepare_phase_parallel(instance, preprepare=True)
+
+        promises = 0
+        while promises < self.net.quorum_size:
+            self.send_heartbeat()
+
+            message: MessageT = self.listen()
+            if message is not None and message.message_type is MessageType.PROMISE:
+                promises += 1
+
+            self.check_heartbeat()
+
+        self._last_prepare_time[instance] = time.time()
+        self._phase1_preprepared_round = self._round_id[instance]
+        self._phase1_preprepared = True
+
+    def prepare_phase_parallel(self, instance: InstanceID, preprepare: bool= False) -> None:
         # Start new round
         self._round_id[instance] *= Proposer.primes[self.id - 1]
         # Discard all promises and accept messages received for previous round
@@ -106,7 +152,7 @@ class Proposer(Node):
 
         prepare_message = Prepare(sender=self,
                                   receiver_role=Role.ACCEPTOR,
-                                  payload=PreparePayload((self._round_id[instance], instance))
+                                  payload=PreparePayload((self._round_id[instance], instance, preprepare))
                                   )
         self.send(prepare_message)
         # Register time of prepare
@@ -133,7 +179,7 @@ class Proposer(Node):
                 self._latest_promise[instance][0] = round_accepted
                 self._latest_promise[instance][1] = value_accepted
 
-        if self._promises_received[instance] == self.net.quorum_size:
+        if self._promises_received[instance] == self.net.quorum_size or self._phase1_preprepared:
             # Set value to propose next to the value received accepted in the highest round, if any, otherwise use
             # value requested by the clint
             if self._latest_promise[instance][0] == RoundID(0):
@@ -145,7 +191,8 @@ class Proposer(Node):
                                       receiver_role=Role.ACCEPTOR,
                                       payload=ProposePayload((self._round_id[instance],
                                                               self._value_to_propose[instance],
-                                                              instance)
+                                                              instance,
+                                                              self._phase1_preprepared and self._enable_phase1_optimization)
                                                              )
                                       )
             self.send(message=propose_message)
@@ -170,11 +217,9 @@ class Proposer(Node):
                 self._decided_values[instance] = accepted_value
                 self._last_decide_time[instance] = time.time()
 
-
     def decide_ack_handler(self, ack: DecideAck) -> None:
         instance: InstanceID = DecideAck.payload
         self._acked_decided_values[instance] = True
-
 
     def check_for_timeouts(self) -> None:
         """
@@ -189,7 +234,10 @@ class Proposer(Node):
             if (time.time() - self._last_prepare_time[instance]) > self._round_timeouts[instance]:
                 #print('\033[93m' + "Instance {0} round {1} exceeded timeout!".format(instance, self._round_id[instance]) + "\033[0m")
                 self._round_timeouts[instance] *= Proposer.TIMEOUT_GROWTH_FACTOR
-                self.prepare_phase_parallel(instance)
+                if self._enable_phase1_optimization:
+                    self.pre_prepare_phase1(instance)
+                else:
+                    self.prepare_phase_parallel(instance)
                 # Handle a single time out per loop to improve responsiveness to input messages
                 break
 
@@ -224,12 +272,16 @@ class Proposer(Node):
         if id == self._leader_id:
             self._last_heartbeat_leader = time.time()
 
-
     def check_heartbeat(self):
         if self.id == self._leader_id:
             return
 
         if (time.time() - self._last_heartbeat_leader) > self.HEARTBEAT_TIMEOUT:
+            self._phase1_preprepared = False
+            # It is not safe to pre prepare again phase 1 beacouse the previous leader may still be active and there
+            # is no way to know for sure the id of the last round in which it proposed!
+            self._enable_phase1_optimization = False
+
             if self._leader_id in self._known_proposers:
                 self._known_proposers.remove(self._leader_id)
             self._leader_id = min(self._known_proposers)

@@ -23,9 +23,9 @@ InstanceID = NewType('InstanceID', int)
 # This is a package, sent in a datagram.
 # Consists of sequence id, aka timestamp,
 # paxos id, and the proposed or decided paxos value.
-PreparePayload = NewType('PreparePayload', Tuple[RoundID, InstanceID])
+PreparePayload = NewType('PreparePayload', Tuple[RoundID, InstanceID, bool])
 PromisePayload = NewType('PromisePayload', Tuple[RoundID, RoundID, PaxosValue, InstanceID])
-ProposePayload = NewType('ProposePayload', Tuple[RoundID, PaxosValue, InstanceID])
+ProposePayload = NewType('ProposePayload', Tuple[RoundID, PaxosValue, InstanceID, bool])
 AcceptPayload = NewType('AcceptPayload', Tuple[RoundID, PaxosValue, InstanceID])
 ClientProposePayload = NewType('ClientProposePayload', Tuple[PaxosValue, InstanceID])
 DecidePayload = NewType('DecidePayload', Tuple[PaxosValue, InstanceID])

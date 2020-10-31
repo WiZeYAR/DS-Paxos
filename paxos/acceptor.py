@@ -18,6 +18,9 @@ class Acceptor(Node):
         # Round in which the accepted value was accepted for each started instance
         self._accepted_round_ID: Dict[InstanceID, RoundID] = {}
 
+        self._preprepared_promise = False
+        self._preprepared_promise_round: RoundID = None
+
 
         # Dictionary containing the callbacks to be executed for each type of message received
         self._message_callbacks = {
@@ -30,6 +33,9 @@ class Acceptor(Node):
         payload: PreparePayload = prepare_message.payload
         round_id: RoundID = payload[0]
         instance: InstanceID = payload[1]
+        preprepare: bool = payload[2]
+        self._preprepared_promise = preprepare
+
 
         # If this instance is new add it to the list of started instances
         if instance not in self._started_instances:
@@ -53,11 +59,21 @@ class Acceptor(Node):
                      .format(self._latest_round_ID[instance], instance)
                      )
 
+        if preprepare:
+            self._preprepared_promise_round = round_id
+
     def accept_parallel(self, propose_message: Propose):
         payload: ProposePayload = propose_message.payload
         round_id: RoundID = payload[0]
         proposed_value: PaxosValue = payload[1]
         instance: InstanceID = payload[2]
+        preprepared_promise = payload[3]
+
+        if preprepared_promise and instance not in self._started_instances:
+            self._started_instances.append(instance)
+            self._latest_round_ID[instance] = self._preprepared_promise_round
+            self._accepted_value[instance] = None
+            self._accepted_round_ID[instance] = RoundID(0)
 
         # Not received a promise for this instance yet, ignore
         if instance not in self._started_instances:
