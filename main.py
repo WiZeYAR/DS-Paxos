@@ -23,6 +23,11 @@ if len(sys.argv) >= 6:
 else:
     plr = 0.0
 
+if len(sys.argv) >= 7:
+    lifetime = float(sys.argv[6])
+else:
+    lifetime = 0.0
+
 assert self_role in ['client', 'proposer', 'acceptor', 'learner'], \
     'Argument at index 1 must define the paxos\'s role'
 
@@ -84,10 +89,10 @@ Current network state:
 """
 
 # ---- SETTING UP INSTANCE ---- #
-paxos_node: Node = (Client(self_id, network, plr) if self_role == 'client'
-                    else Proposer(self_id, network, plr) if self_role == 'proposer'
-                    else Acceptor(self_id, network, plr) if self_role == 'acceptor'
-                    else Learner(self_id, network, plr)
+paxos_node: Node = (Client(self_id, network, plr, lifetime) if self_role == 'client'
+                    else Proposer(self_id, network, plr, lifetime) if self_role == 'proposer'
+                    else Acceptor(self_id, network, plr, lifetime) if self_role == 'acceptor'
+                    else Learner(self_id, network, plr, lifetime)
                     )
 
 # ---- RUNNING THE INSTANCE ---- #

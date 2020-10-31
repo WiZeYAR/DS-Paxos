@@ -9,8 +9,8 @@ from .message import Accept, AcceptPayload, Decide, DecidePayload, RequestAck
 import pickle
 
 class Learner(Node):
-    def __init__(self, id: NodeID, network: Network, plr: float) -> None:
-        super().__init__(id, Role.LEARNER, network, plr)
+    def __init__(self, id: NodeID, network: Network, plr: float, lifetime: float) -> None:
+        super().__init__(id, Role.LEARNER, network, plr, lifetime)
         self._message_callbacks = {
             MessageType.ACCEPT: self.accept_phase_parallel,
             MessageType.DECIDE: self.decide

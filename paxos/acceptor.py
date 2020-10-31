@@ -8,8 +8,8 @@ from .message import PreparePayload, Prepare, PromisePayload, Promise, ProposePa
 
 
 class Acceptor(Node):
-    def __init__(self, id: NodeID, network: Network, plr: float) -> None:
-        super().__init__(id, Role.ACCEPTOR, network, plr)
+    def __init__(self, id: NodeID, network: Network, plr: float, lifetime: float) -> None:
+        super().__init__(id, Role.ACCEPTOR, network, plr, lifetime)
         self._started_instances: List[InstanceID] = []
         # Latest round the acceptor has participated in for each instance
         self._latest_round_ID: Dict[InstanceID, RoundID] = {}

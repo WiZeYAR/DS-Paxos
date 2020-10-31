@@ -10,11 +10,11 @@ from typing import Dict
 
 
 class Client(Node):
-    BASE_TIMEOUT = 0.33
-    TIMEOUT_GROWTH_FACTOR = 1.1
+    BASE_TIMEOUT = 0.5
+    TIMEOUT_GROWTH_FACTOR = 2.0
 
-    def __init__(self, id: NodeID, network: Network, plr: float) -> None:
-        super().__init__(id, Role.CLIENT, network, plr)
+    def __init__(self, id: NodeID, network: Network, plr: float, lifetime: float) -> None:
+        super().__init__(id, Role.CLIENT, network, plr, lifetime)
         self._instance_id: InstanceID = InstanceID(0)
         self._pending_requests: Dict[InstanceID, ClientPropose] = {}
 
@@ -57,6 +57,7 @@ class Client(Node):
                     # Increase timeout and try resend the request
                     self._request_timeouts[instance] *= Client.TIMEOUT_GROWTH_FACTOR
                     self.send(self._pending_requests[instance])
+
 
 
 

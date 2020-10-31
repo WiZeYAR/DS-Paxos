@@ -21,7 +21,8 @@ class Node(Abstract, ):
                  id: NodeID,
                  role: Role,
                  network: Network,
-                 plr: float = 0.0) -> None:
+                 plr: float = 0.0,
+                 lifetime: float =0.0) -> None:
         """
         Default constructor
         """
@@ -31,6 +32,9 @@ class Node(Abstract, ):
 
         assert 0.0 <= plr < 1.0, "Package loss ratio should be between 0 and 1 (excluded)"
         self._package_loss_ratio = plr
+
+        assert lifetime >= 0.0, "Positive lifetime excpected!"
+        self.__lifetime = lifetime
 
         group_sock_address = self.__net[self.__role]
         self.__receiver_socket = Network.multicast_receiver_socket(group_sock_address)
@@ -56,6 +60,10 @@ class Node(Abstract, ):
     @property
     def net(self) -> Network:
         return self.__net
+
+    @property
+    def lifetime(self) -> float:
+        return self.__lifetime
 
     def log(self, message: str):
         self.__logger.debug(message)

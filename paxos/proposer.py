@@ -9,18 +9,18 @@ from .message import RoundID, PaxosValue, InstanceID, ClientPropose, ClientPropo
 from .message import PreparePayload, Prepare, Propose, ProposePayload
 from .message import Promise, PromisePayload, Accept, AcceptPayload, Decide, DecidePayload
 from .message import RequestAck, DecideAck, HeartBeat
-
+import pickle
 
 class Proposer(Node):
     # Naive solution to guarantee uniqueness of round ID between multiple proposers
-    primes = [2, 3, 5, 7, 11, 13, 17]
-    BASE_TIMEOUT = 0.33
-    TIMEOUT_GROWTH_FACTOR = 1.9
-    HEARBEAT_RATE = 0.1
-    HEARTBEAT_TIMEOUT = 4
+    primes = [2, 3, 5, 7, 11, 13, 17, 19 , 23, 29, 31]
+    BASE_TIMEOUT = 0.5
+    TIMEOUT_GROWTH_FACTOR = 2.0
+    HEARBEAT_RATE = 0.33
+    HEARTBEAT_TIMEOUT = 4.0
 
-    def __init__(self, id: NodeID, network: Network, plr: float) -> None:
-        super().__init__(id, Role.PROPOSER, network, plr)
+    def __init__(self, id: NodeID, network: Network, plr: float, lifetime:float) -> None:
+        super().__init__(id, Role.PROPOSER, network, plr, lifetime)
         # The ID of the round currently initiated by the proposer for each undecided instance
         self._round_id: Dict[InstanceID, RoundID] = {}
         # The values to be proposed in the next PROPOSE phase of each undecided instance
@@ -89,8 +89,8 @@ class Proposer(Node):
             self._promises_received[instance] = 0
             self._latest_promise[instance] = [RoundID(0), None]
             self._last_prepare_time[instance] = 0.0
-            self._round_timeouts[instance] = Proposer.BASE_TIMEOUT
-            self._learners_decide_timeout[instance] = Proposer.BASE_TIMEOUT
+            self._round_timeouts[instance] = 1.0*Proposer.BASE_TIMEOUT
+            self._learners_decide_timeout[instance] = 1.0*Proposer.BASE_TIMEOUT
             self._accept_messages_current_round[instance] = 0
 
 
@@ -170,6 +170,7 @@ class Proposer(Node):
                 self._decided_values[instance] = accepted_value
                 self._last_decide_time[instance] = time.time()
 
+
     def decide_ack_handler(self, ack: DecideAck) -> None:
         instance: InstanceID = DecideAck.payload
         self._acked_decided_values[instance] = True
@@ -225,7 +226,12 @@ class Proposer(Node):
 
 
     def check_heartbeat(self):
+        if self.id == self._leader_id:
+            return
+
         if (time.time() - self._last_heartbeat_leader) > self.HEARTBEAT_TIMEOUT:
+            if self._leader_id in self._known_proposers:
+                self._known_proposers.remove(self._leader_id)
             self._leader_id = min(self._known_proposers)
             print("[{1}] CHANGE LEADER TO {0}".format(self._leader_id, self.id))
             self.send_heartbeat()
@@ -235,16 +241,19 @@ class Proposer(Node):
 
     def run(self) -> NoReturn:
         self.log('Start running...')
-
+        start = time.time()
         self._last_heartbeat_leader: float = time.time()
-        self.send_heartbeat()
 
         while True:
+            if self.lifetime > 0.0:
+                if time.time()-start > self.lifetime:
+                    print("Terminating...")
+                    break
             self.send_heartbeat()
-            self.check_heartbeat()
 
             message: MessageT = self.listen()
             if message is not None and message.message_type in self._message_callbacks:
                 self._message_callbacks[message.message_type](message)
 
+            self.check_heartbeat()
             self.check_for_timeouts()
