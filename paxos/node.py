@@ -3,6 +3,7 @@ from copy import deepcopy
 from abc import ABC as Abstract, abstractmethod
 from paxos.network import Network
 from paxos.role import Role
+from utils import ColoredString
 
 import pickle
 import logging
@@ -33,7 +34,7 @@ class Node(Abstract, ):
         assert 0.0 <= plr < 1.0, "Package loss ratio should be between 0 and 1 (excluded)"
         self._package_loss_ratio = plr
 
-        assert lifetime >= 0.0, "Positive lifetime excpected!"
+        assert lifetime >= 0.0, "Positive lifetime expected!"
         self.__lifetime = lifetime
 
         group_sock_address = self.__net[self.__role]
@@ -41,9 +42,9 @@ class Node(Abstract, ):
         self.__sender_socket = Network.udp_sender_socket()
 
         # --- Create logger --- #
-        self.__logger = logging.getLogger("{0}_{1}".format(self.__role.value, self.__id), )
+        self.__logger = logging.getLogger("{0} {1}".format(self.__role.value, self.__id), )
         handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter('%(name)s - %(message)s'))
+        handler.setFormatter(logging.Formatter('[%(name)s] %(message)s'))
         self.__logger.addHandler(handler)
         self.__logger.setLevel(logging.WARNING)
 
@@ -65,8 +66,14 @@ class Node(Abstract, ):
     def lifetime(self) -> float:
         return self.__lifetime
 
-    def log(self, message: str):
+    def log_debug(self, message: str):
         self.__logger.debug(message)
+
+    def log_warning(self, message: str):
+        self.__logger.warning(ColoredString.color_string(message, ColoredString.WARNING))
+
+    def log_info(self, message: str):
+        self.__logger.info(message)
 
     # ---- Public methods ---- #
     def listen(self) -> MessageT:
