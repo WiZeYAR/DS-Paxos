@@ -9,7 +9,6 @@ from .message import RoundID, PaxosValue, InstanceID, ClientPropose, ClientPropo
 from .message import PreparePayload, Prepare, Propose, ProposePayload
 from .message import Promise, PromisePayload, Accept, AcceptPayload, Decide, DecidePayload
 from .message import RequestAck, DecideAck, HeartBeat
-import pickle
 
 class Proposer(Node):
     # Naive solution to guarantee uniqueness of round ID between multiple proposers
@@ -20,7 +19,7 @@ class Proposer(Node):
     HEARTBEAT_TIMEOUT = 4.0
     PREPARE_PHASE1_IN_ADVANCE = True
 
-    def __init__(self, id: NodeID, network: Network, plr: float, lifetime:float) -> None:
+    def __init__(self, id: NodeID, network: Network, plr: float, lifetime: float) -> None:
         super().__init__(id, Role.PROPOSER, network, plr, lifetime)
         # The ID of the round currently initiated by the proposer for each undecided instance
         self._round_id: Dict[InstanceID, RoundID] = {}
@@ -157,7 +156,7 @@ class Proposer(Node):
         self.send(prepare_message)
         # Register time of prepare
         self._last_prepare_time[instance] = time.time()
-        self.log("Started round {0} for instance {1}, with requested value {2}"
+        self.log_debug("Started round {0} for instance {1}, with requested value {2}"
                  .format(self._round_id[instance], instance, self._client_requests[instance])
                  )
 
@@ -196,7 +195,7 @@ class Proposer(Node):
                                                              )
                                       )
             self.send(message=propose_message)
-            self.log("Proposing value {0} for instance {1}".format(self._value_to_propose[instance], instance))
+            self.log_debug("Proposing value {0} for instance {1}".format(self._value_to_propose[instance], instance))
 
     def accept_phase_parallel(self, accept_message: Accept) -> None:
         payload: AcceptPayload = accept_message.payload
@@ -285,21 +284,21 @@ class Proposer(Node):
             if self._leader_id in self._known_proposers:
                 self._known_proposers.remove(self._leader_id)
             self._leader_id = min(self._known_proposers)
-            print("[{1}] CHANGE LEADER TO {0}".format(self._leader_id, self.id))
+            self.log_warning("Elected proposer {0} as the new leader".format(self._leader_id, self.id))
             self.send_heartbeat()
             self._last_heartbeat_sent = time.time()
             self._last_heartbeat_leader = time.time()
 
 
     def run(self) -> NoReturn:
-        self.log('Start running...')
+        self.log_info('Start running...')
         start = time.time()
         self._last_heartbeat_leader: float = time.time()
 
         while True:
             if self.lifetime > 0.0:
                 if time.time()-start > self.lifetime:
-                    print("Terminating...")
+                    self.log_warning("Terminating...")
                     break
             self.send_heartbeat()
 

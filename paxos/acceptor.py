@@ -1,4 +1,6 @@
 from typing import NoReturn, Dict, List
+import time
+
 from .role import Role
 from .network import Network
 from .node import NodeID, Node, MessageT
@@ -55,7 +57,7 @@ class Acceptor(Node):
                                                                        instance))
                                                )
             self.send(message=promise_message)
-            self.log("Sending Promise for round {0} and instance {1}"
+            self.log_debug("Sending Promise for round {0} and instance {1}"
                      .format(self._latest_round_ID[instance], instance)
                      )
 
@@ -81,7 +83,7 @@ class Acceptor(Node):
 
         if round_id >= self._latest_round_ID[instance]:
             if self._accepted_value[instance] is not proposed_value:
-                self.log("Accepted value {0} for round {1} and instance {2}"
+                self.log_debug("Accepted value {0} for round {1} and instance {2}"
                          .format(proposed_value, round_id, instance)
                          )
 
@@ -107,9 +109,15 @@ class Acceptor(Node):
 
 
     def run(self) -> NoReturn:
-        self.log("Start running...")
+        self.log_info("Start running...")
+        start = time.time()
 
         while True:
+            if self.lifetime > 0.0:
+                if time.time()-start > self.lifetime:
+                    self.log_warning("Terminating...")
+                    break
+
             message: MessageT = self.listen()
             if message is not None and message.message_type in self._message_callbacks:
                 self._message_callbacks[message.message_type](message)

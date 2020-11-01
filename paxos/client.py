@@ -37,13 +37,19 @@ class Client(Node):
 
 
     def run(self) -> NoReturn:
-        self.log("Start running...")
+        self.log_info("Start running...")
+        start = time.time()
 
         for value in sys.stdin:
             self.request_value(value.strip())
             self._request_timeouts[self._instance_id] = Client.BASE_TIMEOUT
 
         while True:
+            if self.lifetime > 0.0:
+                if time.time()-start > self.lifetime:
+                    self.log_warning("Terminating...")
+                    break
+
             # If an ACK is received remove request for the corresponding instance from the set of pending request
             message: MessageT = self.listen()
             if message is not None and message.message_type is MessageType.REQUEST_ACK:

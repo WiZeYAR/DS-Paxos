@@ -1,8 +1,9 @@
 
 
 class ColoredString:
-    WARNING = "\033[93m"
     END_COLOR = "\033[0m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
     GREEN = "\033[92m"
 
     @staticmethod

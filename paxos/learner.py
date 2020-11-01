@@ -57,7 +57,7 @@ class Learner(Node):
 
         if self._accept_messages_received[instance][acceptor_round] == self.net.quorum_size:
             self._decided_values[instance] = accepted_value
-            self.log("DECIDED value {0} for instance {1}".format(self._decided_values[instance], instance))
+            self.log_debug("DECIDED value {0} for instance {1}".format(self._decided_values[instance], instance))
 
             file = open('results/learner{}_decided_value'.format(self.id), "wb")
             pickle.dump(dict(sorted(self._decided_values.items())), file=file)
@@ -114,7 +114,7 @@ class Learner(Node):
             if self._leader_id in self._known_learners:
                 self._known_learners.remove(self._leader_id)
             self._leader_id = min(self._known_learners)
-            print("[{1}] CHANGE LEADER TO {0}".format(self._leader_id, self.id))
+            self.log_warning("Elected learner {0} as the new leader".format(self._leader_id, self.id))
             self.send_heartbeat()
             self._last_heartbeat_sent = time.time()
             self._last_heartbeat_leader = time.time()
@@ -183,10 +183,16 @@ class Learner(Node):
     # ---------------------------------- #
 
     def run(self) -> NoReturn:
-        self.log("Start running...")
+        self.log_info("Start running...")
+        start = time.time()
 
         self._last_heartbeat_leader: float = time.time()
         while True:
+            if self.lifetime > 0.0:
+                if time.time()-start > self.lifetime:
+                    self.log_warning("Terminating...")
+                    break
+
             self.send_heartbeat()
             self.send_catchup_request()
 
