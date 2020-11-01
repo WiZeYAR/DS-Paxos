@@ -3,6 +3,7 @@
 import sys
 import pickle
 from typing import List, Dict
+from os import  path
 
 from utils import ColoredString
 
@@ -10,10 +11,13 @@ def load_proposed_values(n_clients: int) -> List[List[int]]:
     proposed_values: List[List[int]] = [[] for i in range(n_clients)]
 
     for i in range(1,n_clients+1):
-        file = open('results/propose{0}.txt'.format(i), "r")
+        if not path.exists('results/propose{0}.txt'.format(i)):
+            print("File {0} not found! Exiting".format('results/propose{0}.txt'.format(i)))
+            return None
 
-        for line in file:
-            proposed_values[i-1].append(int(line.strip()))
+        with open('results/propose{0}.txt'.format(i), "r") as file:
+            for line in file:
+                proposed_values[i-1].append(int(line.strip()))
 
     return proposed_values
 
@@ -22,9 +26,12 @@ def load_decided_values(n_learners: int, n_values: int) -> List[Dict[int,int]]:
     decided_values: List[Dict[int, int]] = []
 
     for i in range(1, n_learnes+1):
-        file = open('results/learner{0}_decided_value'.format(i), "rb")
-        decided_values.append(pickle.load(file=file))
-        file.close()
+        if not path.exists('results/learner{0}_decided_value'.format(i)):
+            print("File {0} not found! Exiting".format('results/learner{0}_decided_value'.format(i)))
+            return None
+
+        with open('results/learner{0}_decided_value'.format(i), "rb") as file:
+            decided_values.append(pickle.load(file=file))
 
         for instance in range(1, n_values+1):
             if instance not in decided_values[i-1]:
@@ -72,8 +79,13 @@ if __name__ == '__main__':
     clients_in_files: List[str] = []
 
     proposed_values: List[List[int]] = load_proposed_values(n_clients)
+    if proposed_values is None:
+        exit()
+
     n_values = len(proposed_values[0])
     decided_values: List[Dict[int, int]] = load_decided_values(n_learnes, n_values)
+    if decided_values is None:
+        exit()
 
     integrity = True
     agreement = True
