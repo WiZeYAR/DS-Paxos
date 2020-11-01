@@ -19,8 +19,11 @@ class Proposer(Node):
     HEARTBEAT_TIMEOUT = 4.0
     PREPARE_PHASE1_IN_ADVANCE = True
 
-    def __init__(self, id: NodeID, network: Network, plr: float, lifetime: float) -> None:
+    def __init__(self, id: NodeID, network: Network, plr: float, lifetime: float,
+                 disable_timeout: bool = False, disable_pre_execution: bool = False) -> None:
         super().__init__(id, Role.PROPOSER, network, plr, lifetime)
+        self.disable_timout = disable_timeout
+
         # The ID of the round currently initiated by the proposer for each undecided instance
         self._round_id: Dict[InstanceID, RoundID] = {}
         # The values to be proposed in the next PROPOSE phase of each undecided instance
@@ -58,7 +61,7 @@ class Proposer(Node):
         # Pre-prepare phase 1 flag
         self._phase1_preprepared: bool = False
         self._phase1_preprepared_round: RoundID = None
-        self._enable_phase1_optimization = Proposer.PREPARE_PHASE1_IN_ADVANCE
+        self._enable_phase1_optimization = Proposer.PREPARE_PHASE1_IN_ADVANCE and not disable_pre_execution
 
 
         # Dictionary containing the callbacks to be executed for each type of message received
@@ -95,7 +98,7 @@ class Proposer(Node):
             self._promises_received[instance] = 0
             self._latest_promise[instance] = [RoundID(0), None]
             self._last_prepare_time[instance] = 0.0
-            self._round_timeouts[instance] = 1.0*Proposer.BASE_TIMEOUT
+            self._round_timeouts[instance] = 1.0*Proposer.BASE_TIMEOUT if not self.disable_timout else float('inf')
             self._learners_decide_timeout[instance] = 1.0*Proposer.BASE_TIMEOUT
             self._accept_messages_current_round[instance] = 0
 
@@ -131,7 +134,7 @@ class Proposer(Node):
 
         promises = 0
         start = time.time()
-        while promises < self.net.quorum_size and (time.time() - start) < Proposer.BASE_TIMEOUT:
+        while promises < self.net.quorum_size and (time.time() - start) < self._round_timeouts[instance]:
             if self.lifetime > 0.0:
                 if (time.time()-self.start_time) > self.lifetime:
                     return

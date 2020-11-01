@@ -28,6 +28,16 @@ if len(sys.argv) >= 7:
 else:
     lifetime = 0.0
 
+if len(sys.argv) >= 8:
+    disable_timeouts = bool(sys.argv[7])
+else:
+    disable_timeouts = False
+
+if len(sys.argv) >= 9:
+    disable_preexecution = bool(sys.argv[8])
+else:
+    disable_preexecution = False
+
 assert self_role in ['client', 'proposer', 'acceptor', 'learner'], \
     'Argument at index 1 must define the paxos\'s role'
 
@@ -90,7 +100,7 @@ Current network state:
 
 # ---- SETTING UP INSTANCE ---- #
 paxos_node: Node = (Client(self_id, network, plr, lifetime) if self_role == 'client'
-                    else Proposer(self_id, network, plr, lifetime) if self_role == 'proposer'
+                    else Proposer(self_id, network, plr, lifetime, disable_timeouts, disable_preexecution) if self_role == 'proposer'
                     else Acceptor(self_id, network, plr, lifetime) if self_role == 'acceptor'
                     else Learner(self_id, network, plr, lifetime)
                     )
