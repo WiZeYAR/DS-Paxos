@@ -4,6 +4,8 @@ import sys
 import pickle
 from typing import List, Dict
 
+from utils import ColoredString
+
 def load_proposed_values(n_clients: int) -> List[List[int]]:
     proposed_values: List[List[int]] = [[] for i in range(n_clients)]
 
@@ -20,7 +22,7 @@ def load_decided_values(n_learners: int, n_values: int) -> List[Dict[int,int]]:
     decided_values: List[Dict[int, int]] = []
 
     for i in range(1, n_learnes+1):
-        file = open('learner{0}_decided_value'.format(i), "rb")
+        file = open('results/learner{0}_decided_value'.format(i), "rb")
         decided_values.append(pickle.load(file=file))
         file.close()
 
@@ -35,8 +37,27 @@ def print_decided_values(decided_values: List[Dict[int, int]], n_values: int, n_
 
         str = ""
         for learner in range(n_learnes):
-            str += "  {0}  ".format(decided_values[learner][instance])
+            if decided_values[learner][instance] is not None:
+                str += "  {0}  ".format(decided_values[learner][instance])
+            else:
+                str += ColoredString.color_string("  {0}  ".format(decided_values[learner][instance]), ColoredString.WARNING)
         print(str)
+
+
+def print_consensus_property(integrity, agreement, termination, termination_ratio):
+    print("Integrity: " +
+          ColoredString.color_string("{0}".format(integrity),
+                                     ColoredString.GREEN if integrity else ColoredString.FAIL)
+          )
+    print("Agreement: " +
+          ColoredString.color_string("{0}".format(agreement),
+                                     ColoredString.GREEN if agreement else ColoredString.FAIL)
+          )
+    print("Termination: " +
+          ColoredString.color_string("{0} ({1}%)".format(termination, termination_ratio),
+                                     ColoredString.GREEN if termination else ColoredString.FAIL)
+          )
+
 
 if __name__ == '__main__':
     assert len(sys.argv) >= 3,\
@@ -44,6 +65,7 @@ if __name__ == '__main__':
 
     n_learnes: int = int(sys.argv[1])
     n_clients: int = int(sys.argv[2])
+    print_values: bool = bool(sys.argv[3]) if len(sys.argv) >= 4 else False
 
     learners_out_files: List[str] = []
     clients_in_files: List[str] = []
@@ -55,37 +77,43 @@ if __name__ == '__main__':
     integrity = True
     agreement = True
     termination = True
+    n_decided = 0
 
     for i in range(n_values):
         instance = i + 1
-        value = decided_values[0][instance]
-        for learner in range(n_learnes):
 
-            # If a lerner decided a different value AGREEMENT is not satisfied
-            if decided_values[learner][instance] != value:
-                agreement = False
+        values = []
+        for learner in range(n_learnes):
+            # Append value decided by this learner to the list of decided values for this instance
+            if decided_values[learner][instance] not in values:
+                values.append(decided_values[learner][instance])
+
             # If a learner did not decide for an instance, TERMINATION is not satisfied
-            if decided_values[learner][instance] == None:
+            if decided_values[learner][instance] is None:
                 termination = False
             else:
-                # If a value was decided chack if integrity is preserved
+                # If a value was decided check if integrity is preserved
                 integrity = False
                 for client in range(n_clients):
                     if proposed_values[client][i] == int(decided_values[learner][instance]):
                         integrity = True
 
-        if not integrity and not agreement and not termination:
-            break
+        # If more than one value has been decided for this instance, agreement is violated
+        if len(values) == 1 and None not in values:
+            n_decided += 1
+        else:
+            values.remove(None)
+
+        if len(values) > 1:
+            agreement = False
 
 
+    termination_ratio = n_decided / n_values * 100.0
 
-    print("Integrity: {0}".format(integrity))
-    print("Agreement: {0}".format(agreement))
-    print("Termination: {0}".format(termination))
+    print_consensus_property(integrity, agreement, termination, termination_ratio)
 
-    print_decided_values(decided_values, n_values, n_learnes)
+    if print_values:
+        print_decided_values(decided_values, n_values, n_learnes)
+        print_consensus_property(integrity, agreement, termination, termination_ratio)
 
-    print("Integrity: {0}".format(integrity))
-    print("Agreement: {0}".format(agreement))
-    print("Termination: {0}".format(termination))
 
