@@ -71,7 +71,7 @@ class Acceptor(Node):
         instance: InstanceID = payload[2]
         preprepared_promise = payload[3]
 
-        if preprepared_promise and instance not in self._started_instances:
+        if preprepared_promise and self._preprepared_promise and instance not in self._started_instances:
             self._started_instances.append(instance)
             self._latest_round_ID[instance] = self._preprepared_promise_round
             self._accepted_value[instance] = None
