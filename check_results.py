@@ -33,12 +33,13 @@ def load_decided_values(n_learners: int, n_values: int) -> List[Dict[int,int]]:
     return decided_values
 
 def print_decided_values(decided_values: List[Dict[int, int]], n_values: int, n_learners: int) -> None:
+
     for instance in range(1, n_values+1):
 
-        str = ""
+        str = "Instance: {0:5} |".format(instance)
         for learner in range(n_learnes):
             if decided_values[learner][instance] is not None:
-                str += "  {0}  ".format(decided_values[learner][instance])
+                str += "  {0:7}  ".format(decided_values[learner][instance])
             else:
                 str += ColoredString.color_string("  {0}  ".format(decided_values[learner][instance]), ColoredString.WARNING)
         print(str)
