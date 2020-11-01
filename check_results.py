@@ -81,6 +81,10 @@ if __name__ == '__main__':
     while len(sys.argv) >= (pos+1):
         first_instance.append(int(sys.argv[pos]))
         pos += 1
+
+    if len(first_instance) == 0:
+        for client in range(n_clients):
+            first_instance.append(1)
     assert len(first_instance) == n_clients, "Either specify first instance for all clients or for none"
 
 
