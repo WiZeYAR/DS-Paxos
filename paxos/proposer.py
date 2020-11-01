@@ -108,16 +108,17 @@ class Proposer(Node):
                 if self._phase1_preprepared is not True:
                     self.pre_prepare_phase1(instance)
 
-                promise: Promise = Promise(sender=self,
-                                           receiver_role=Role.PROPOSER,
-                                           payload=PromisePayload((self._phase1_preprepared_round,
-                                                                   RoundID(0),
-                                                                   None,
-                                                                   instance))
-                                           )
-                self._round_id[instance] = self._phase1_preprepared_round
-                self._last_prepare_time[instance] = time.time()
-                self.propose_phase_parallel(promise_message=promise)
+                if self._phase1_preprepared:
+                    promise: Promise = Promise(sender=self,
+                                               receiver_role=Role.PROPOSER,
+                                               payload=PromisePayload((self._phase1_preprepared_round,
+                                                                       RoundID(0),
+                                                                       None,
+                                                                       instance))
+                                               )
+                    self._round_id[instance] = self._phase1_preprepared_round
+                    self._last_prepare_time[instance] = time.time()
+                    self.propose_phase_parallel(promise_message=promise)
 
 
 
@@ -129,7 +130,12 @@ class Proposer(Node):
         self.prepare_phase_parallel(instance, preprepare=True)
 
         promises = 0
-        while promises < self.net.quorum_size:
+        start = time.time()
+        while promises < self.net.quorum_size and (time.time() - start) < Proposer.BASE_TIMEOUT:
+            if self.lifetime > 0.0:
+                if (time.time()-self.start_time) > self.lifetime:
+                    return
+
             self.send_heartbeat()
 
             message: MessageT = self.listen()
@@ -137,6 +143,13 @@ class Proposer(Node):
                 promises += 1
 
             self.check_heartbeat()
+
+        if promises < self.net.quorum_size:
+            self._enable_phase1_optimization = False
+            self.log_warning("Unable to receive in time enough promises to execute phase 1 in advance, "
+                             "optimization disabled!")
+            self._phase1_preprepared = False
+            return
 
         self._last_prepare_time[instance] = time.time()
         self._phase1_preprepared_round = self._round_id[instance]
@@ -233,10 +246,8 @@ class Proposer(Node):
             if (time.time() - self._last_prepare_time[instance]) > self._round_timeouts[instance]:
                 #print('\033[93m' + "Instance {0} round {1} exceeded timeout!".format(instance, self._round_id[instance]) + "\033[0m")
                 self._round_timeouts[instance] *= Proposer.TIMEOUT_GROWTH_FACTOR
-                if self._enable_phase1_optimization:
-                    self.pre_prepare_phase1(instance)
-                else:
-                    self.prepare_phase_parallel(instance)
+                self._enable_phase1_optimization = False
+                self.prepare_phase_parallel(instance)
                 # Handle a single time out per loop to improve responsiveness to input messages
                 break
 
@@ -292,12 +303,12 @@ class Proposer(Node):
 
     def run(self) -> NoReturn:
         self.log_info('Start running...')
-        start = time.time()
+        self.start_time = time.time()
         self._last_heartbeat_leader: float = time.time()
 
         while True:
             if self.lifetime > 0.0:
-                if time.time()-start > self.lifetime:
+                if (time.time()-self.start_time) > self.lifetime:
                     self.log_warning("Terminating...")
                     break
             self.send_heartbeat()
