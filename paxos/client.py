@@ -13,9 +13,9 @@ class Client(Node):
     BASE_TIMEOUT = 0.5
     TIMEOUT_GROWTH_FACTOR = 2.0
 
-    def __init__(self, id: NodeID, network: Network, plr: float, lifetime: float) -> None:
+    def __init__(self, id: NodeID, network: Network, plr: float, lifetime: float, first_instance: int = 1) -> None:
         super().__init__(id, Role.CLIENT, network, plr, lifetime)
-        self._instance_id: InstanceID = InstanceID(0)
+        self._instance_id: InstanceID = InstanceID(first_instance-1)
         self._pending_requests: Dict[InstanceID, ClientPropose] = {}
 
         # Timeout for receiving an ACK for each instance value request
