@@ -306,6 +306,11 @@ class Proposer(Node):
 
     def run(self) -> NoReturn:
         self.log_info('Start running...')
+        if self.disable_timout:
+            self.log_warning('Disabled round timeouts')
+
+        if not self._enable_phase1_optimization:
+            self.log_warning('Disabled phase 1 pre-execution')
         self.start_time = time.time()
         self._last_heartbeat_leader: float = time.time()
 

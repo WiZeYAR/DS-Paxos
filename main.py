@@ -29,12 +29,12 @@ else:
     lifetime = 0.0
 
 if len(sys.argv) >= 8:
-    disable_timeouts = bool(sys.argv[7])
+    disable_timeouts = bool(int(sys.argv[7]))
 else:
     disable_timeouts = False
 
 if len(sys.argv) >= 9:
-    disable_preexecution = bool(sys.argv[8])
+    disable_preexecution = bool(int(sys.argv[8]))
 else:
     disable_preexecution = False
 
