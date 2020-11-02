@@ -1,8 +1,53 @@
 version: "3"
 
 services:
-  acceptor:
+  # ---- ACCEPTORS ---- #
+  acceptor1:
     build: .
     environment:
+      - LIFETIME=10.0
+      - PLR=0.1
       - ROLE=acceptor
-      - ID=0
+      - ID=1
+  acceptor2:
+    build: .
+    environment:
+      - PLR=0.1
+      - ROLE=acceptor
+      - ID=2
+  acceptor3:
+    build: .
+    environment:
+      - PLR=0.1
+      - ROLE=acceptor
+      - ID=4
+
+  # ---- PROPOSERS ---- #
+  proposer1:
+    build: .
+    environment:
+      - PLR=0.1
+      - ROLE=proposer
+      - ID=1
+
+  # ---- LEARNERS ---- #
+  learner1:
+    build: .
+    environment:
+      - PLR=0.1
+      - ROLE=learner
+      - ID=1
+  learner2:
+    build: .
+    environment:
+      - PLR=0.1
+      - ROLE=learner
+      - ID=2
+
+  # ---- CLIENTS ---- #
+  client1:
+    build: .
+    environment:
+      - PLR=0.1
+      - ROLE=client
+      - ID=2
