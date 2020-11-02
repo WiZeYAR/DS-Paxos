@@ -1,0 +1,72 @@
+version: "3"
+
+services:
+  # ---- ACCEPTORS ---- #
+  acceptor1:
+    build: .
+    environment:
+      - ROLE=acceptor
+      - ID=1
+  acceptor2:
+    build: .
+    environment:
+      - ROLE=acceptor
+      - ID=2
+  acceptor3:
+    build: .
+    environment:
+      - ROLE=acceptor
+      - ID=3
+
+  # ---- PROPOSERS ---- #
+  proposer1:
+    build: .
+    environment:
+      - ROLE=proposer
+      - ID=1
+
+  proposer2:
+    build: .
+    environment:
+      - ROLE=proposer
+      - ID=2
+
+  proposer3:
+    build: .
+    environment:
+      - ROLE=proposer
+      - ID=3
+
+  # ---- LEARNERS ---- #
+  learner1:
+    build: .
+    container_name: learner1
+    environment:
+      - ROLE=learner
+      - ID=1
+
+  learner2:
+    build: .
+    container_name: learner2
+    environment:
+      - ROLE=learner
+      - ID=2
+
+  # ---- CLIENTS ---- #
+  client1:
+    build: .
+    container_name: client1
+    stdin_open: true
+    tty: true
+    environment:
+      - ROLE=client
+      - ID=1
+
+  client2:
+    build: .
+    container_name: client2
+    stdin_open: true
+    tty: true
+    environment:
+      - ROLE=client
+      - ID=2
