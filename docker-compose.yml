@@ -1,0 +1,8 @@
+version: "3"
+
+services:
+  acceptor:
+    build: .
+    environment:
+      - ROLE=acceptor
+      - ID=0
