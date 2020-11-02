@@ -59,6 +59,8 @@ services:
   # ---- CLIENTS ---- #
   client1:
     build: .
+    stdin_open: true
+    tty: true
     environment:
       - PLR=0.1
       - ROLE=client
