@@ -18,7 +18,7 @@ if [[ x$PLR == "x" ]]; then
 fi
 
 if [[ x$FIRST_INSTANCE == "x" ]]; then
-  FIRST_INSTANCE_DEFAULT="$FIRST_INSTANCE_DEFAULT"
+  FIRST_INSTANCE="$FIRST_INSTANCE_DEFAULT"
 fi
 
 resultdir=./results
