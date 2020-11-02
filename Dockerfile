@@ -14,4 +14,4 @@ RUN apk add --no-cache bash
 COPY . .
 
 # command to run on container start
-ENTRYPOINT docker-entrypoint.sh
+ENTRYPOINT ./docker-entrypoint.sh
