@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-projdir="$1"
+
 conf=./paxos/paxos.conf
 n=100
 plr=0.0

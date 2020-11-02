@@ -69,7 +69,7 @@ def print_consensus_property(integrity, agreement, termination, termination_rati
 
 if __name__ == '__main__':
     assert len(sys.argv) >= 3,\
-        'Usage: n_learners n_clients [learners output files] [client_input_files]'
+        'Usage: n_learners n_clients [print decided value] [list of starting instance number for each client]'
 
     n_learnes: int = int(sys.argv[1])
     n_clients: int = int(sys.argv[2])
