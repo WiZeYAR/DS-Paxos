@@ -124,7 +124,7 @@ class Proposer(Node):
                     self.propose_phase_parallel(promise_message=promise)
 
 
-
+    # --- PHASE 1A, 2a and 3 ---- #
     def pre_prepare_phase1(self, instance: InstanceID):
         """
         Run a prepare phase for this instance and wait to get a promises from a quorum, while still sending and
@@ -232,6 +232,10 @@ class Proposer(Node):
                 self._decided_values[instance] = accepted_value
                 self._last_decide_time[instance] = time.time()
 
+    # ---------------------------#
+
+    # ---- Round timeout and Learner decide timeout ----- #
+
     def decide_ack_handler(self, ack: DecideAck) -> None:
         instance: InstanceID = DecideAck.payload
         self._acked_decided_values[instance] = True
@@ -268,6 +272,10 @@ class Proposer(Node):
                     # Handle a single time out per loop to improve responsiveness to input messages
                     break
 
+    # --------------------------------------------------- #
+
+    # ----- LEADER ELECTION ORACLE --------------- #
+
     def send_heartbeat(self) -> None:
         if (time.time() - self._last_heartbeat_sent) > self.HEARBEAT_RATE or self._last_heartbeat_sent == 0.0:
             heatbeat: HeartBeat = HeartBeat(sender=self,
@@ -303,22 +311,28 @@ class Proposer(Node):
             self._last_heartbeat_sent = time.time()
             self._last_heartbeat_leader = time.time()
 
+    # -------------------------------------------- #
 
     def run(self) -> NoReturn:
         self.log_info('Start running...')
+
+        # Warn user about disabled features
         if self.disable_timout:
             self.log_warning('Disabled round timeouts')
-
         if not self._enable_phase1_optimization:
             self.log_warning('Disabled phase 1 pre-execution')
+
+
         self.start_time = time.time()
         self._last_heartbeat_leader: float = time.time()
 
         while True:
+            # Check for termination
             if self.lifetime > 0.0:
                 if (time.time()-self.start_time) > self.lifetime:
                     self.log_warning("Terminating...")
                     break
+
             self.send_heartbeat()
 
             message: MessageT = self.listen()
