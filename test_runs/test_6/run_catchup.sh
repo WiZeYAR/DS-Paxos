@@ -78,4 +78,4 @@ sleep 10
 $KILLCMD
 wait
 
-./check_results.py 2 2 true $n $((n+1))
+./check_results.py 2 2 true 1 $((n+1))
