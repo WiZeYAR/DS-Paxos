@@ -1,4 +1,5 @@
 # Multi-Paxos
+# Group 1: Simone Eandi, Yaroslav Petrov
 
 This repository contains an implemntation of Multi-Paxos designed to be fairly robust to the most common failure cases. It allows to start a process that runs executing one of the four Paxos roles (client, proposer, acceptor and learner), simulate different Multi-Paxos executions by starting some number of processes/ nodes with different configurations and verify the correctness of the results.
 
@@ -52,6 +53,7 @@ The folder ```test_runs``` contains a set of of scripts for running and verifyin
 ### Launching Multi-Paxos in docker containers
 A docker-compose file is provided in which all the processes for which a container should be created are defined. The image of each service is created through the ```Dockerfile```: when a container is started an entrypoint script is executed, which executes the bash script to launch the correct role and, more in general, defines what each process (in its own container) should do in a similar fashion to what the ```run.sh``` script does when running paxos locally. Two entrypoint script are already defined in the ```Docker_entrypoints``` folder. The execution of the processes can be changhed by modifying the entry point script, in particular, all the input arguments that the script launching each role takes (i.e. lifetime, num of values, etc.), are defined there once for all the processes: this is done becouse typically all processes are run with equal arguments and so this allows to easily change the execution behaviour by modifying a single variable. See the provided entrypoint script for reference. To use a different entry poitn script modify the last line of the ```Dockerfile```.
 
+(Start Docker Desktop)
 To build the docker compose images run 
 ```docker-compose build```
 then to start the containers run
