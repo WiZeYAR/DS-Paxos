@@ -8,8 +8,7 @@ if [[ x$CLIENTS == "x" || x$LEARNERS == "x" ]]; then
     exit 1
 fi
 
-#mkdir $resultdir
-rm -r resultdir/*
+rm -r results/*
 
 for ((id=1;id<=$CLIENTS;id++)); do
   docker cp client"$id":/app/results/propose"$id".txt results/propose"$id".txt
